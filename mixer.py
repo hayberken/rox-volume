@@ -19,9 +19,9 @@
 """
 
 import rox
-from rox import g, app_options, Menu, InfoWin, OptionsBox
+from rox import app_options, Menu, InfoWin, OptionsBox
 from rox.options import Option
-import gobject, volumecontrol
+import gtk, gobject, volumecontrol
 from volumecontrol import VolumeControl
 
 try:
@@ -33,8 +33,11 @@ APP_NAME = 'Mixer'
 APP_DIR = rox.app_dir
 APP_SIZE = [20, 100]
 
-
-rox.setup_app_options('Volume', 'Mixer.xml')
+#Options.xml processing
+from rox import choices
+choices.migrate('Volume', 'hayber.us')
+rox.setup_app_options('Volume', 'Mixer.xml', site='hayber.us')
+Menu.set_save_name('Volume', site='hayber.us')
 
 MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
 SHOW_VALUES = Option('show_values', False)
@@ -45,10 +48,10 @@ MASK_MUTE = Option('mute_mask', 0)
 
 def build_mixer_controls(box, node, label, option):
 	"""Custom Option widget to allow hide/display of each mixer control"""
-	frame = g.ScrolledWindow()
-	frame.set_policy(g.POLICY_NEVER, g.POLICY_ALWAYS)
+	frame = gtk.ScrolledWindow()
+	frame.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
 	frame.set_size_request(100, 100)
-	vbox = g.VBox()
+	vbox = gtk.VBox()
 	frame.add_with_viewport(vbox)
 
 	controls = {}
@@ -65,7 +68,7 @@ def build_mixer_controls(box, node, label, option):
 	mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 	for control in OSS_CONTROLS:
 		if mixer.controls() & (1 << control[0]):
-			checkbox = controls[control[0]] = g.CheckButton(label=control[1])
+			checkbox = controls[control[0]] = gtk.CheckButton(label=control[1])
 			if option.int_value & (1 << control[0]):
 				checkbox.set_active(True)
 			checkbox.connect('toggled', lambda e: box.check_widget(option))
@@ -80,7 +83,7 @@ def build_hidden_value(box, node, label, option):
 	A custom Option widget to save/restore a value
 	in the Options system without any UI
 	"""
-	widget = g.HBox() #something unobtrusive
+	widget = gtk.HBox() #something unobtrusive
 	def get_values(): return option.int_value
 	def set_values(): pass
 	box.handlers[option] = (get_values, set_values)
@@ -125,7 +128,7 @@ class Mixer(rox.Window):
 	def __init__(self):
 		rox.Window.__init__(self)
 
-		self.thing = g.HBox()
+		self.thing = gtk.HBox()
 		self.add(self.thing)
 
 		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
@@ -168,13 +171,12 @@ class Mixer(rox.Window):
 		self.thing.show_all()
 		self.thing.show()
 
-		self.add_events(g.gdk.BUTTON_PRESS_MASK)
+		self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
 		self.connect('button-press-event', self.button_press)
-		Menu.set_save_name('Volume')
 		self.menu = Menu.Menu('main', [
-			Menu.Action(_('Options'), 'show_options', '', g.STOCK_PREFERENCES),
-			Menu.Action(_('Info'), 'get_info', '', g.STOCK_DIALOG_INFO),
-			Menu.Action(_('Close'), 'quit', '', g.STOCK_CLOSE),
+			Menu.Action(_('Options'), 'show_options', '', gtk.STOCK_PREFERENCES),
+			Menu.Action(_('Info'), 'get_info', '', gtk.STOCK_DIALOG_INFO),
+			Menu.Action(_('Close'), 'quit', '', gtk.STOCK_CLOSE),
 			])
 		self.menu.attach(self, self)
 

@@ -1,18 +1,34 @@
 #!/usr/bin/env python
-import findrox; findrox.version(1, 9, 13)
-import rox, os, sys
+try:
+	import findrox; findrox.version(1, 9, 13)
+	import rox, os, sys
 
-__builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
+	__builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
 
+	from optparse import OptionParser
 
-import mixer
-main = mixer.Mixer()
+	parser = OptionParser()
+	parser.add_option("--mixer-options",
+		action="store_true", dest="mix_options", default=False,
+		help="display mixer options dialog")
+	parser.add_option("--volume-options",
+		action="store_true", dest="vol_options", default=False,
+		help="display volume options dialog")
 
-main.show_all()
-rox.mainloop()
+	(options, args) = parser.parse_args()
 
+	if options.mix_options:
+		import mixer
+		rox.edit_options(rox.app_dir+'/Mixer.xml')
+	elif options.vol_options:
+		import volume
+		rox.edit_options(rox.app_dir+'/Options.xml')
+	else:
+		import mixer
+		main = mixer.Mixer()
+		main.show_all()
 
-#!/bin/sh
+	rox.mainloop()
+except:
+	rox.report_exception()
 
-#APP_DIR=`dirname $0` export APP_DIR
-#exec gnome-volume-control "$@"

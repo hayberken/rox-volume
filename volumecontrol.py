@@ -18,9 +18,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import rox
-from rox import g
-import gobject
+import rox, gtk, gobject
 
 CHANNEL_LEFT	= 0
 CHANNEL_RIGHT	= 1
@@ -32,7 +30,7 @@ _LOCK	= 2
 _REC	= 4
 _MUTE	= 8
 
-class VolumeControl(g.Frame):
+class VolumeControl(gtk.Frame):
 	"""
 	A Class that implements a volume control (stereo or mono) for a sound card
 	mixer.  Each instance represents one mixer channel on the sound card.
@@ -54,7 +52,7 @@ class VolumeControl(g.Frame):
 
 		'volume_setting_toggled' notifies the parent of changes in the optional checkboxes.
 		"""
-		g.Frame.__init__(self, label)
+		gtk.Frame.__init__(self, label)
 
 		self.rec = self.lock = self.stereo = self.mute = False
 		if option_mask & _LOCK:
@@ -76,12 +74,12 @@ class VolumeControl(g.Frame):
 		self.vol_left = self.vol_right = 0
 		self.set_size_request(60, 200)
 
-		vbox = g.VBox()
+		vbox = gtk.VBox()
 		self.add(vbox)
-		hbox = g.HBox()
+		hbox = gtk.HBox()
 		vbox.pack_start(hbox)
 
-		self.volume1 = g.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
+		self.volume1 = gtk.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
 		if self.stereo:
 			self.volume1.connect('value_changed', self.value_changed,
 						control, CHANNEL_LEFT)
@@ -90,45 +88,45 @@ class VolumeControl(g.Frame):
 						control, CHANNEL_MONO)
 
 		if vertical:
-			volume1_control = g.VScale(self.volume1)
+			volume1_control = gtk.VScale(self.volume1)
 			volume1_control.set_inverted(True)
 		else:
-			volume1_control = g.HScale(self.volume1)
-			volume1_control.set_value_pos(g.POS_RIGHT)
+			volume1_control = gtk.HScale(self.volume1)
+			volume1_control.set_value_pos(gtk.POS_RIGHT)
 		volume1_control.set_draw_value(show_value)
 		volume1_control.set_digits(0)
 		hbox.pack_start(volume1_control)
 
 		if self.stereo:
-			self.volume2 = g.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
+			self.volume2 = gtk.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
 			self.volume2.connect('value_changed', self.value_changed,
 						control, CHANNEL_RIGHT)
 
 			if vertical:
-				volume2_control = g.VScale(self.volume2)
+				volume2_control = gtk.VScale(self.volume2)
 				volume2_control.set_inverted(True)
 			else:
-				volume2_control = g.HScale(self.volume2)
-				volume2_control.set_value_pos(g.POS_RIGHT)
+				volume2_control = gtk.HScale(self.volume2)
+				volume2_control.set_value_pos(gtk.POS_RIGHT)
 			volume2_control.set_draw_value(show_value)
 			volume2_control.set_digits(0)
 			hbox.pack_start(volume2_control)
 
 		if self.rec:
-			rec_check = g.CheckButton(label=_('Rec.'))
+			rec_check = gtk.CheckButton(label=_('Rec.'))
 			rec_check.set_active(self.channel_rec)
 			rec_check.connect('toggled', self.check, control, _REC)
 			vbox.pack_end(rec_check, False, False)
 			self.rec_check = rec_check
 
 		if self.mute:
-			mute_check = g.CheckButton(label=_('Mute'))
+			mute_check = gtk.CheckButton(label=_('Mute'))
 			mute_check.set_active(self.channel_muted)
 			mute_check.connect('toggled', self.check, control, _MUTE)
 			vbox.pack_end(mute_check, False, False)
 
 		if self.stereo and self.lock:
-			lock_check = g.CheckButton(label=_('Lock'))
+			lock_check = gtk.CheckButton(label=_('Lock'))
 			lock_check.set_active(self.channel_locked)
 			lock_check.connect('toggled', self.check, control, _LOCK)
 			vbox.pack_end(lock_check, False, False)

@@ -18,8 +18,9 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import rox, sys
-from rox import g, app_options, applet, Menu, InfoWin
+import rox, sys, gtk
+from rox import app_options, applet, Menu, InfoWin
+from rox.options import Option
 from volumecontrol import VolumeControl
 
 try:
@@ -31,9 +32,11 @@ APP_NAME = 'Volume'
 APP_DIR = rox.app_dir
 APP_SIZE = [28, 150]
 
-from rox.options import Option
-
-rox.setup_app_options(APP_NAME)
+#Options.xml processing
+from rox import choices
+choices.migrate(APP_NAME, 'hayber.us')
+rox.setup_app_options(APP_NAME, site='hayber.us')
+Menu.set_save_name(APP_NAME, site='hayber.us')
 
 MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
 VOLUME_CONTROL = Option('volume_control', 'VOLUME')
@@ -56,42 +59,41 @@ class Volume(applet.Applet):
 		self.vertical = self.get_panel_orientation() in ('Right', 'Left')
 		if self.vertical:
 			self.set_size_request(8, -1)
-			self.box = g.VBox()
-			bar_orient = g.PROGRESS_LEFT_TO_RIGHT
+			self.box = gtk.VBox()
+			bar_orient = gtk.PROGRESS_LEFT_TO_RIGHT
 		else:
 			self.set_size_request(-1, 8)
-			self.box = g.HBox()
-			bar_orient = g.PROGRESS_BOTTOM_TO_TOP
+			self.box = gtk.HBox()
+			bar_orient = gtk.PROGRESS_BOTTOM_TO_TOP
 
 		self.add(self.box)
 
-		self.image = g.Image()
-		self.pixbuf = g.gdk.pixbuf_new_from_file(APP_DIR+'/images/volume.svg')
+		self.image = gtk.Image()
+		self.pixbuf = gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/volume.svg')
 		self.image.set_from_pixbuf(self.pixbuf)
 		self.size = 0
 		self.box.pack_start(self.image)
 
-		self.bar = g.ProgressBar()
+		self.bar = gtk.ProgressBar()
 		self.bar.set_orientation(bar_orient)
-		self.bar.set_size_request(10,10)
+		self.bar.set_size_request(12,12)
 		self.box.pack_end(self.bar)
 
-		tooltips = g.Tooltips()
+		tooltips = gtk.Tooltips()
 		tooltips.set_tip(self, _('Volume control'), tip_private=None)
 
 		rox.app_options.add_notify(self.get_options)
 		self.connect('size-allocate', self.event_callback)
 		self.connect('scroll_event', self.button_scroll)
 
-		self.add_events(g.gdk.BUTTON_PRESS_MASK)
+		self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
 		self.connect('button-press-event', self.button_press)
-		Menu.set_save_name(APP_NAME)
 		self.menu = Menu.Menu('main', [
 			Menu.Action(_('Mixer'), 'run_mixer', ''),
 			Menu.Separator(),
-			Menu.Action(_('Options'), 'show_options', '', g.STOCK_PREFERENCES),
-			Menu.Action(_('Info'), 'get_info', '', g.STOCK_DIALOG_INFO),
-			Menu.Action(_('Close'), 'quit', '', g.STOCK_CLOSE),
+			Menu.Action(_('Options'), 'show_options', '', gtk.STOCK_PREFERENCES),
+			Menu.Action(_('Info'), 'get_info', '', gtk.STOCK_DIALOG_INFO),
+			Menu.Action(_('Close'), 'quit', '', gtk.STOCK_CLOSE),
 			])
 		self.menu.attach(self, self)
 
@@ -128,7 +130,7 @@ class Volume(applet.Applet):
 	def resize_image(self, size):
 		"""Called to resize the image."""
 		#I like the look better with the -4, there is no technical reason for it.
-		scaled_pixbuf = self.pixbuf.scale_simple(size-4, size-4, g.gdk.INTERP_BILINEAR)
+		scaled_pixbuf = self.pixbuf.scale_simple(size-4, size-4, gtk.gdk.INTERP_BILINEAR)
 		self.image.set_from_pixbuf(scaled_pixbuf)
 		self.size = size
 
@@ -153,7 +155,7 @@ class Volume(applet.Applet):
 	def get_panel_orientation(self):
 		"""Return the panel orientation ('Top', 'Bottom', 'Left', 'Right')
 		and the margin for displaying a popup menu"""
-		pos = self.socket.property_get('_ROX_PANEL_MENU_POS', 'STRING', g.FALSE)
+		pos = self.socket.property_get('_ROX_PANEL_MENU_POS', 'STRING', gtk.FALSE)
 		if pos: pos = pos[2]
 		if pos:
 			side, margin = pos.split(',')
@@ -195,8 +197,8 @@ class Volume(applet.Applet):
 		"""Display the popup volume control"""
 #		self.mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 
-		self.thing = g.Window(type=g.WINDOW_POPUP)
-		self.thing.set_type_hint(g.gdk.WINDOW_TYPE_HINT_MENU)
+		self.thing = gtk.Window(type=gtk.WINDOW_POPUP)
+		self.thing.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
 		self.thing.set_decorated(False)
 
 		vertical = self.set_position()
