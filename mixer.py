@@ -19,10 +19,11 @@
 """
 
 import rox
-from rox import g, app_options, Menu, InfoWin
+from rox import g, app_options, Menu, InfoWin, OptionsBox
 from rox.options import Option
-from rox.Menu import *
-import gobject
+import gobject, volumecontrol
+from volumecontrol import VolumeControl
+
 try:
 	import ossaudiodev
 except:
@@ -33,166 +34,76 @@ APP_DIR = rox.app_dir
 APP_SIZE = [20, 100]
 
 
-rox.setup_app_options(APP_NAME)
+rox.setup_app_options('Volume', 'Mixer.xml')
 
 MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
-VOLUME_CONTROL = Option('volume_control', 'VOLUME')
+SHOW_VALUES = Option('show_values', False)
+SHOW_CONTROLS = Option('controls', -1)
+
+
+def build_mixer_controls(box, node, label, option):
+	"""Custom Option widget to allow hide/display of each mixer control"""
+	frame = g.ScrolledWindow()
+	frame.set_policy(g.POLICY_NEVER, g.POLICY_ALWAYS)
+	frame.set_size_request(100, 100)
+	vbox = g.VBox()
+	frame.add_with_viewport(vbox)
+
+	controls = {}
+
+	def get_values():
+		value = 0
+		for x in controls:
+			if controls[x].get_active():
+				value |= (1 << x)
+		return value
+	def set_values(): pass
+	box.handlers[option] = (get_values, set_values)
+
+	mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
+	for control in OSS_CONTROLS:
+		if mixer.controls() & (1 << control[0]):
+			checkbox = controls[control[0]] = g.CheckButton(label=control[1])
+			if option.int_value & (1 << control[0]):
+				checkbox.set_active(True)
+			checkbox.connect('toggled', lambda e: box.check_widget(option))
+			vbox.pack_start(checkbox)
+	mixer.close()
+	box.may_add_tip(frame, node)
+	return [frame]
+OptionsBox.widget_registry['mixer_controls'] = build_mixer_controls
 
 rox.app_options.notify()
-set_save_name(APP_NAME)
 
-
-CHANNEL_LEFT = 0
-CHANNEL_RIGHT = 1
-CHANNEL_MONO = 3
-CHANNEL_LOCK = 4
-CHANNEL_MUTE = 5
-CHANNEL_REC = 6
 
 OSS_CONTROLS = [
-	(ossaudiodev.SOUND_MIXER_VOLUME, 'Master'),
-	(ossaudiodev.SOUND_MIXER_BASS, 'Bass'),
-	(ossaudiodev.SOUND_MIXER_TREBLE, 'Treble'),
-	(ossaudiodev.SOUND_MIXER_SYNTH, 'Synth'),
-	(ossaudiodev.SOUND_MIXER_PCM, 'PCM'),
-	(ossaudiodev.SOUND_MIXER_SPEAKER, 'Speaker'),
-	(ossaudiodev.SOUND_MIXER_LINE, 'Line'),
-	(ossaudiodev.SOUND_MIXER_MIC, 'Mic'),
-	(ossaudiodev.SOUND_MIXER_CD, 'CD'),
-	(ossaudiodev.SOUND_MIXER_IMIX, 'iMix'),  # Recording monitor
-	(ossaudiodev.SOUND_MIXER_ALTPCM, 'PCM2'),
-	(ossaudiodev.SOUND_MIXER_RECLEV, 'Rec Level'),  # Recording level
-	(ossaudiodev.SOUND_MIXER_IGAIN,	'In Gain'),  # Input gain
-	(ossaudiodev.SOUND_MIXER_OGAIN,	'Out Gain'),  # Output gain
-	(14, 'Aux'),
-	(15, '15'),
-	(16, '16'),
-	(17, '17'),
-	(18, '18'),
-	(19, '19'),
-	(20, 'ph In'),
-	(21, 'ph Out'),
-	(22, 'Video'),
-	(23, '23'),
-	(24, '24'),
-	(25, '25'),
+	(ossaudiodev.SOUND_MIXER_VOLUME, _('Master')),
+	(ossaudiodev.SOUND_MIXER_BASS, _('Bass')),
+	(ossaudiodev.SOUND_MIXER_TREBLE, _('Treble')),
+	(ossaudiodev.SOUND_MIXER_SYNTH, _('Synth')),
+	(ossaudiodev.SOUND_MIXER_PCM, _('PCM')),
+	(ossaudiodev.SOUND_MIXER_SPEAKER, _('Speaker')),
+	(ossaudiodev.SOUND_MIXER_LINE, _('Line')),
+	(ossaudiodev.SOUND_MIXER_MIC, _('Mic')),
+	(ossaudiodev.SOUND_MIXER_CD, _('CD')),
+	(ossaudiodev.SOUND_MIXER_IMIX, _('iMix')),  # Recording monitor
+	(ossaudiodev.SOUND_MIXER_ALTPCM, _('PCM2')),
+	(ossaudiodev.SOUND_MIXER_RECLEV, _('Rec Level')),  # Recording level
+	(ossaudiodev.SOUND_MIXER_IGAIN,	_('In Gain')),  # Input gain
+	(ossaudiodev.SOUND_MIXER_OGAIN,	_('Out Gain')),  # Output gain
+	(14, _('Aux')),
+	(15, _('15')),
+	(16, _('16')),
+	(17, _('17')),
+	(18, _('18')),
+	(19, _('19')),
+	(20, _('ph In')),
+	(21, _('ph Out')),
+	(22, _('Video')),
+	(23, _('23')),
+	(24, _('24')),
+	(25, _('25')),
 ]
-
-class VolumeControl(g.Frame):
-	"""
-	A Class that implements a volume control (stereo or mono) for a sound card
-	mixer.  Each instance represents one mixer channel on the sound card.
-	"""
-	def __init__(self, control, stereo, rec, recsrc, locked, muted, label=None):
-		g.Frame.__init__(self, label)
-
-		self.channel_locked = locked
-		self.channel_rec = False
-		self.channel_mute = muted
-		self.stereo = stereo
-		self.vol_left = self.vol_right = 0
-
-		self.set_size_request(60, 200)
-
-		vbox = g.VBox()
-		self.add(vbox)
-		hbox = g.HBox()
-		vbox.pack_start(hbox)
-
-		self.volume1 = g.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
-		if stereo:
-			self.volume1.connect('value_changed', self.value_changed,
-						control, CHANNEL_LEFT)
-		else:
-			self.volume1.connect('value_changed', self.value_changed,
-						control, CHANNEL_MONO)
-
-		volume1_control = g.VScale(self.volume1)
-		volume1_control.set_draw_value(False)
-		volume1_control.set_inverted(True)
-		hbox.pack_start(volume1_control)
-
-		if stereo:
-			self.volume2 = g.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
-			self.volume2.connect('value_changed', self.value_changed,
-						control, CHANNEL_RIGHT)
-
-			volume2_control = g.VScale(self.volume2)
-			volume2_control.set_draw_value(False)
-			volume2_control.set_inverted(True)
-			hbox.pack_start(volume2_control)
-
-		if rec:
-			rec_check = g.CheckButton(label='Rec.')
-			rec_check.set_active(recsrc)
-			rec_check.connect('toggled', self.check, control, CHANNEL_REC)
-			vbox.pack_end(rec_check, False, False)
-
-		mute_check = g.CheckButton(label='Mute')
-		mute_check.set_active(muted)
-		mute_check.connect('toggled', self.check, control, CHANNEL_MUTE)
-		vbox.pack_end(mute_check, False, False)
-
-		if stereo:
-			lock_check = g.CheckButton(label='Lock')
-			lock_check.set_active(locked)
-			lock_check.connect('toggled', self.check, control, CHANNEL_LOCK)
-			vbox.pack_end(lock_check, False, False)
-
-		self.show_all()
-
-
-	def set_level(self, level):
-		self.volume1.set_value(level[0])
-		if self.stereo:
-			self.volume2.set_value(level[1])
-
-	def get_level(self):
-		return (self.vol_left, self.vol_right)
-
-	def value_changed(self, vol, control, channel):
-		"""Track changes in the volume controls and pass them back to the parent"""
-		if channel == CHANNEL_LEFT:
-			self.vol_left = int(vol.get_value())
-			if self.channel_locked:
-				self.volume2.set_value(vol.get_value())
-
-		elif channel == CHANNEL_RIGHT:
-			self.vol_right = int(vol.get_value())
-			if self.channel_locked:
-				self.volume1.set_value(vol.get_value())
-
-		else:
-			self.vol_left = self.vol_right = int(vol.get_value())
-		self.emit("volume_changed", control, self.vol_left, self.vol_right)
-
-
-	def check(self, button, control, id):
-		"""Handle all the check buttons"""
-		if id == CHANNEL_LOCK:
-			self.channel_locked = not self.channel_locked
-			if self.channel_locked:
-				avg_vol = (self.vol_left+self.vol_right)/2
-				self.volume1.set_value(avg_vol)
-				self.volume2.set_value(avg_vol)
-
-		elif id == CHANNEL_MUTE:
-			self.channel_mute = not self.channel_mute
-		else:
-			self.channel_rec = not self.channel_rec
-		self.emit('volume_setting_toggled', control, id, button.get_active())
-
-
-#why don't these work as part of the class???
-#I need these to be called only once, not each time an instance is created.
-gobject.signal_new('volume_changed', VolumeControl,
-		gobject.SIGNAL_RUN_LAST, gobject.TYPE_BOOLEAN,
-		(gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_INT))
-
-gobject.signal_new('volume_setting_toggled', VolumeControl,
-		gobject.SIGNAL_RUN_LAST, gobject.TYPE_BOOLEAN,
-		(gobject.TYPE_INT, gobject.TYPE_INT, gobject.TYPE_INT))
-
 
 
 class Mixer(rox.Window):
@@ -206,14 +117,23 @@ class Mixer(rox.Window):
 		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 		self.mixer = mixer
 		for control in OSS_CONTROLS:
-			if mixer.controls() & (1 << control[0]):
-				stereo = mixer.stereocontrols() & (1 << control[0])
-				rec = mixer.reccontrols() & (1 << control[0])
-				recsrc = mixer.get_recsrc() & (1 << control[0])
+			#if the mixer supports a channel and we haven't masked it out, add it
+			if ((mixer.controls() & (1 << control[0])) and
+				(SHOW_CONTROLS.int_value & (1 << control[0]))):
+				option_mask = option_value = 0
+				if mixer.stereocontrols() & (1 << control[0]):
+					option_mask |= volumecontrol._STEREO
+					option_mask |= volumecontrol._LOCK
+					option_value |= volumecontrol._LOCK
+				if mixer.reccontrols() & (1 << control[0]):
+					option_mask |= volumecontrol._REC
+				if mixer.get_recsrc() & (1 << control[0]):
+					option_value |= volumecontrol._REC
 
-				volume = VolumeControl(control[0], stereo, rec, recsrc,
-							True, False, control[1])
+				option_mask |= volumecontrol._MUTE
 
+				volume = VolumeControl(control[0], option_mask, option_value,
+									SHOW_VALUES.int_value, control[1])
 				volume.set_level(self.get_volume(control[0]))
 				volume.connect("volume_changed", self.adjust_volume)
 				volume.connect("volume_setting_toggled", self.setting_toggled)
@@ -222,34 +142,34 @@ class Mixer(rox.Window):
 		self.thing.show_all()
 		self.thing.show()
 
-		menu = Menu('main', [
-			Action(_('Options'), 'show_options', '', g.STOCK_PREFERENCES),
-			Action(_('Info'), 'get_info', '', g.STOCK_DIALOG_INFO),
-			Action(_('Close'), 'quit', '', g.STOCK_CLOSE),
+		self.add_events(g.gdk.BUTTON_PRESS_MASK)
+		self.connect('button-press-event', self.button_press)
+		Menu.set_save_name('Volume')
+		self.menu = Menu.Menu('main', [
+			Menu.Action(_('Options'), 'show_options', '', g.STOCK_PREFERENCES),
+			Menu.Action(_('Info'), 'get_info', '', g.STOCK_DIALOG_INFO),
+			Menu.Action(_('Close'), 'quit', '', g.STOCK_CLOSE),
 			])
-		menu.attach(self, self)
+		self.menu.attach(self, self)
 
 
-	def button_press(self, window, event):
-		"""Display a Menu"""
-		if event.button == 1:
-			if not self.hide_volume():
-				self.show_volume(event)
-		elif event.button == 3:
-			menu.popup(self, event, self.position_menu)
+	def button_press(self, text, event):
+		'''Popup menu handler'''
+		if event.button != 3:
+			return 0
+		self.menu.popup(self, event)
+		return 1
 
 	def setting_toggled(self, vol, control, id, val):
-		"""Mute the channel by setting the volume to 0"""
-		if id == CHANNEL_MUTE:
+		"""Handle checkbox toggles"""
+		if id == volumecontrol._MUTE:
 			if val: #mute on
 				self.set_volume((0, 0), control)
 			else:
 				self.set_volume(vol.get_level(), control)
-
-		if id == CHANNEL_LOCK:
+		if id == volumecontrol._LOCK:
 			pass
-
-		if id == CHANNEL_REC:
+		if id == volumecontrol._REC:
 			pass
 
 	def adjust_volume(self, vol, control, volume1, volume2):
@@ -273,7 +193,7 @@ class Mixer(rox.Window):
 
 	def show_options(self, button=None):
 		"""Options edit dialog"""
-		rox.edit_options()
+		rox.edit_options(APP_DIR+'/Mixer.xml')
 
 	def get_info(self):
 		InfoWin.infowin(APP_NAME)

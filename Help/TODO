@@ -1,0 +1,6 @@
+TODO items for Volume
+
+* Beep!
+* Nicer options, like rename each control.  (hide/show is done)
+* Remember each setting (locked, muted)
+* Handle Rec and Rec Source properly.  Currently it does nothing.

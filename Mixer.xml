@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<options>
+	<section title="General">
+		<frame label='Mixer Device'>
+			<entry name='mixer_device' label='Path'>
+			The /dev entry for your mixer.  Typically /dev/mixer.
+			</entry>
+		</frame>
+	</section>
+
+	<section title="Display">
+		<frame label='Options'>
+			<toggle name='show_values' label='Show Mixer Values'>
+			Display the value (0-100) of each control as it changes.
+			</toggle>
+		</frame>
+		<frame label='Controls'>
+		<mixer_controls name="controls"/>
+		</frame>
+	</section>
+</options>

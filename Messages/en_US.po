@@ -1,0 +1,155 @@
+#: volume.py:58
+msgid "Volume control"
+msgstr ""
+
+#: mixer.py:90
+msgid "PCM2"
+msgstr ""
+
+#: mixer.py:84
+msgid "PCM"
+msgstr ""
+
+#: tips:7
+msgid "Display"
+msgstr ""
+
+#: mixer.py:80
+msgid "Master"
+msgstr ""
+
+#: mixer.py:30 volume.py:28
+msgid "You need python 2.3 for ossaudiodev support"
+msgstr ""
+
+#: mixer.py:83
+msgid "Synth"
+msgstr ""
+
+#: mixer.py:94
+msgid "Aux"
+msgstr ""
+
+#: tips:10 tips:11
+msgid "Display the value (0-100) of each control as it changes."
+msgstr ""
+
+#: mixer.py:104
+msgid "24"
+msgstr ""
+
+#: mixer.py:105
+msgid "25"
+msgstr ""
+
+#: mixer.py:81
+msgid "Bass"
+msgstr ""
+
+#: mixer.py:103
+msgid "23"
+msgstr ""
+
+#: mixer.py:93
+msgid "Out Gain"
+msgstr ""
+
+#: mixer.py:149 volume.py:64 tips:8
+msgid "Options"
+msgstr ""
+
+#: tips:4 tips:5 tips:6
+msgid "The /dev entry for your mixer.  Typically /dev/mixer."
+msgstr ""
+
+#: tips:3
+msgid "Path"
+msgstr ""
+
+#: mixer.py:86
+msgid "Line"
+msgstr ""
+
+#: mixer.py:87
+msgid "Mic"
+msgstr ""
+
+#: mixer.py:150 volume.py:65
+msgid "Info"
+msgstr ""
+
+#: mixer.py:88
+msgid "CD"
+msgstr ""
+
+#: tips:12
+msgid "Controls"
+msgstr ""
+
+#: mixer.py:151 volume.py:66
+msgid "Close"
+msgstr ""
+
+#: mixer.py:100
+msgid "ph In"
+msgstr ""
+
+#: mixer.py:89
+msgid "iMix"
+msgstr ""
+
+#: mixer.py:92
+msgid "In Gain"
+msgstr ""
+
+#: mixer.py:82
+msgid "Treble"
+msgstr ""
+
+#: mixer.py:101
+msgid "ph Out"
+msgstr ""
+
+#: mixer.py:95
+msgid "15"
+msgstr ""
+
+#: mixer.py:97
+msgid "17"
+msgstr ""
+
+#: mixer.py:96
+msgid "16"
+msgstr ""
+
+#: mixer.py:99
+msgid "19"
+msgstr ""
+
+#: mixer.py:98
+msgid "18"
+msgstr ""
+
+#: tips:1
+msgid "General"
+msgstr ""
+
+#: mixer.py:91
+msgid "Rec Level"
+msgstr ""
+
+#: mixer.py:102
+msgid "Video"
+msgstr ""
+
+#: mixer.py:85
+msgid "Speaker"
+msgstr ""
+
+#: tips:9
+msgid "Show Mixer Values"
+msgstr ""
+
+#: tips:2
+msgid "Mixer Device"
+msgstr ""

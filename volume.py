@@ -20,6 +20,7 @@
 
 import rox
 from rox import g, app_options, applet, Menu, InfoWin
+from volumecontrol import VolumeControl
 
 try:
 	import ossaudiodev
@@ -28,8 +29,7 @@ except:
 
 APP_NAME = 'Volume'
 APP_DIR = rox.app_dir
-
-APP_SIZE = [20, 100]
+APP_SIZE = [28, 150]
 
 from rox.options import Option
 
@@ -39,13 +39,6 @@ MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
 VOLUME_CONTROL = Option('volume_control', 'VOLUME')
 
 rox.app_options.notify()
-Menu.set_save_name(APP_NAME)
-
-menu = Menu.Menu('main', [
-	(_('/Options'),'show_options','<StockItem>','', g.STOCK_PREFERENCES),
-	(_('/Info'),'get_info','<StockItem>','', g.STOCK_DIALOG_INFO),
-	(_('/Close'),'quit','<StockItem>','', g.STOCK_CLOSE),
-	])
 
 MIXER_CONTROLS = {
 	'VOLUME':ossaudiodev.SOUND_MIXER_VOLUME,
@@ -54,91 +47,130 @@ MIXER_CONTROLS = {
 	}
 
 class Volume(applet.Applet):
-	"""description"""
+	"""An applet to control a sound card Master or PCM volume"""
 	def __init__(self, filename):
-		"""description"""
 		applet.Applet.__init__(self, filename)
 		self.thing = None
 		image_vol = g.Image()
 		image_vol.set_from_file(APP_DIR+'/images/stock_volume.svg')
 		self.add(image_vol)
+		tooltips = g.Tooltips()
+		tooltips.set_tip(self, _('Volume control'), tip_private=None)
+
 		self.add_events(g.gdk.BUTTON_PRESS_MASK)
 		self.connect('button-press-event', self.button_press)
-		menu.attach(self, self)
-		tooltips = g.Tooltips()
-		tooltips.set_tip(self, _("Volume control"), tip_private=None)
+		Menu.set_save_name(APP_NAME)
+		self.menu = Menu.Menu('main', [
+			Menu.Action(_('Options'), 'show_options', '', g.STOCK_PREFERENCES),
+			Menu.Action(_('Info'), 'get_info', '', g.STOCK_DIALOG_INFO),
+			Menu.Action(_('Close'), 'quit', '', g.STOCK_CLOSE),
+			])
+		self.menu.attach(self, self)
+
 
 	def button_press(self, window, event):
-		"""description"""
+		"""Show/Hide the volume control on button 1 and the menu on button 3"""
 		if event.button == 1:
 			if not self.hide_volume():
 				self.show_volume(event)
 		elif event.button == 3:
-			menu.popup(self, event, self.position_menu)
+			self.hide_volume()
+			self.menu.popup(self, event, self.position_menu)
 
 	def hide_volume(self, event=None):
-		"""description"""
+		"""Destroy the popup volume control"""
 		if self.thing:
+			self.mixer = None
 			self.thing.destroy()
 			self.thing = None
 			return True
 		return False
 
+	def get_panel_orientation(self):
+		"""Return the panel orientation ('Top', 'Bottom', 'Left', 'Right')
+		and the margin for displaying a popup menu"""
+		pos = self.socket.property_get('_ROX_PANEL_MENU_POS', 'STRING', g.FALSE)
+		if pos: pos = pos[2]
+		if pos:
+			side, margin = pos.split(',')
+			margin = int(margin)
+		else:
+			side, margin = None, 2
+		return (side, margin)
+
+	def set_position(self):
+		"""Set the position of the popup"""
+		(side, margin) = self.get_panel_orientation()
+
+		# widget (x, y, w, h, bits)
+		geometry = self.socket.get_geometry()
+
+		if side == 'Bottom':
+			vertical = True
+			self.thing.set_size_request(APP_SIZE[0], APP_SIZE[1])
+			self.thing.move(self.socket.get_origin()[0],
+						self.socket.get_origin()[1]-APP_SIZE[1])
+		elif side == 'Top':
+			vertical = True
+			self.thing.set_size_request(APP_SIZE[0], APP_SIZE[1])
+			self.thing.move(self.socket.get_origin()[0],
+						self.socket.get_origin()[1]+geometry[3])
+		elif side == 'Left':
+			vertical = False
+			self.thing.set_size_request(APP_SIZE[1], APP_SIZE[0])
+			self.thing.move(self.socket.get_origin()[0]+geometry[2],
+						self.socket.get_origin()[1])
+		elif side == 'Right':
+			vertical = False
+			self.thing.set_size_request(APP_SIZE[1], APP_SIZE[0])
+			self.thing.move(self.socket.get_origin()[0]-APP_SIZE[1],
+						self.socket.get_origin()[1])
+		return vertical
+
 	def show_volume(self, event):
-		"""description"""
+		"""Display the popup volume control"""
+		self.mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
+
 		self.thing = g.Window(type=g.WINDOW_POPUP)
 		self.thing.set_type_hint(g.gdk.WINDOW_TYPE_HINT_MENU)
 		self.thing.set_decorated(False)
-		self.thing.set_size_request(APP_SIZE[0], APP_SIZE[1])
-		#self.socket is a gdk window for the widget in the panel.
-		#get_origin gets its screen location
-		self.thing.move(self.socket.get_origin()[0]+APP_SIZE[0]/4,
-						self.socket.get_origin()[1]-APP_SIZE[1])
-		self.volume = g.Adjustment(0.5, 0.0, 1.0, 0.1, 0.1, 0.0)
-		self.volume.connect('value_changed', self.adjust_volume)
-		self.volume_control = g.VScale(self.volume)
-		self.volume_control.set_draw_value(True)
-		self.volume_control.set_inverted(True)
-		self.volume_control.set_size_request(APP_SIZE[0], APP_SIZE[1])
-		self.volume_control.set_value(self.get_volume())
-		self.thing.add(self.volume_control)
+
+		vertical = self.set_position()
+		self.volume = VolumeControl(MIXER_CONTROLS[VOLUME_CONTROL.value],
+						0, 0, True, None, vertical)
+		self.volume.set_level(self.get_volume(MIXER_CONTROLS[VOLUME_CONTROL.value]))
+		self.volume.connect("volume_changed", self.adjust_volume)
+
+		self.thing.add(self.volume)
 		self.thing.show_all()
 		self.thing.show()
 
-	def adjust_volume(self, vol):
+	def adjust_volume(self, vol, control, vol_left, vol_right):
 		"""Set the playback volume"""
-		self.set_volume(vol.get_value())
+		self.set_volume((vol_left, vol_right), control)
 
-	def set_volume(self, volume):
-		"""description"""
-		vol = int(volume*100)
-		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-		if mixer != None:
-			mixer.set(MIXER_CONTROLS[VOLUME_CONTROL.value], (vol, vol))
+	def set_volume(self, volume, control):
+		"""Send the volume setting(s) to the mixer """
+		self.mixer.set(control, volume)
 
-	def get_volume(self):
-		"""description"""
-		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-		if mixer != None:
-			vol = mixer.get(MIXER_CONTROLS[VOLUME_CONTROL.value])
-			return float(max(vol[0], vol[1]))/100
+	def get_volume(self, control):
+		"""Get the volume settings from the mixer"""
+		vol = self.mixer.get(control)
+		return (vol[0], vol[1])
 
 	def get_options(self):
 		"""Used as the notify callback when options change"""
-		if SHUFFLE.has_changed:
-			self.shuffle.set_active(SHUFFLE.int_value)
-
-		if REPEAT.has_changed:
-			self.repeat.set_active(REPEAT.int_value)
+		pass
 
 	def show_options(self, button=None):
 		"""Options edit dialog"""
 		rox.edit_options()
 
 	def get_info(self):
+		"""Display an InfoWin box"""
 		InfoWin.infowin(APP_NAME)
 
 	def quit(self):
-		"""description"""
+		"""Quit"""
 		self.destroy()
 
