@@ -1,26 +1,25 @@
 <?xml version="1.0"?>
 <options>
+	<hidden_value name="lock_mask"/>
+	<hidden_value name="mute_mask"/>
+
 	<section title="General">
-		<frame label='Mixer Device'>
-			<entry name='mixer_device' label='Path'>
-			The /dev entry for your mixer.  Typically /dev/mixer.
-			</entry>
-		</frame>
-	</section>
-
-	<section title="Display">
-		<frame label='Options'>
-			<toggle name='show_values' label='Show Mixer Values'>
-			Display the value (0-100) of each control as it changes.
-			</toggle>
-		</frame>
-		<frame label='Controls'>
-
-		<mixer_controls name="controls"/>
-
-		<hidden_value name="lock_mask"/>
-		<hidden_value name="mute_mask"/>
-
-		</frame>
+		<hbox>
+			<vbox>
+				<frame label='Mixer Device'>
+					<entry name='mixer_device' label='Path'>
+					The /dev entry for your mixer.  Typically /dev/mixer.
+					</entry>
+				</frame>
+				<frame label='Options'>
+					<toggle name='show_values' label='Show Mixer Values'>
+					Display the value (0-100) of each control as it changes.
+					</toggle>
+				</frame>
+			</vbox>
+			<frame label='Mixer Channels'>
+				<mixer_controls name="controls"/>
+			</frame>
+		</hbox>
 	</section>
 </options>

@@ -50,7 +50,7 @@ def build_mixer_controls(box, node, label, option):
 	"""Custom Option widget to allow hide/display of each mixer control"""
 	frame = gtk.ScrolledWindow()
 	frame.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-	frame.set_size_request(100, 100)
+	frame.set_size_request(150, 150)
 	vbox = gtk.VBox()
 	frame.add_with_viewport(vbox)
 
