@@ -1,3 +1,23 @@
+"""
+	volume.py (a volume control applet for the ROX Panel)
+
+	Copyright 2004 Kenneth Hayber <khayber@socal.rr.com>
+		All rights reserved.
+
+	This program is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2 of the License.
+
+	This program is distributed in the hope that it will be useful
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+"""
+
 import rox
 from rox import g, app_options, applet, Menu, InfoWin
 
@@ -45,6 +65,8 @@ class Volume(applet.Applet):
 		self.add_events(g.gdk.BUTTON_PRESS_MASK)
 		self.connect('button-press-event', self.button_press)
 		menu.attach(self, self)
+		tooltips = g.Tooltips()
+		tooltips.set_tip(self, _("Volume control"), tip_private=None)
 
 	def button_press(self, window, event):
 		"""description"""
@@ -64,7 +86,8 @@ class Volume(applet.Applet):
 
 	def show_volume(self, event):
 		"""description"""
-		self.thing = g.Window()
+		self.thing = g.Window(type=g.WINDOW_POPUP)
+		self.thing.set_type_hint(g.gdk.WINDOW_TYPE_HINT_MENU)
 		self.thing.set_decorated(False)
 		self.thing.set_size_request(APP_SIZE[0], APP_SIZE[1])
 		#self.socket is a gdk window for the widget in the panel.

@@ -1,4 +1,18 @@
+#!/usr/bin/env python
+import findrox; findrox.version(1, 9, 8)
+import rox, os, sys
+
+__builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
+
+
+import mixer
+main = mixer.Mixer()
+
+main.show_all()
+rox.mainloop()
+
+
 #!/bin/sh
 
-APP_DIR=`dirname $0` export APP_DIR
-exec gnome-volume-control "$@"
+#APP_DIR=`dirname $0` export APP_DIR
+#exec gnome-volume-control "$@"
