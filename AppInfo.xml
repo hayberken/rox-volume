@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<AppInfo>
+<Summary>ROX Volume Applet and Wrapper for Gnome-Mixer</Summary>
+<About>
+<Purpose>ROX Volume Applet and Wrapper for Gnome-Mixer</Purpose>
+<Version>001</Version>
+<Authors>Ken Hayber</Authors>
+<License>GNU General Public License</License>
+<Homepage></Homepage>
+</About>
+</AppInfo>
