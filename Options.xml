@@ -15,5 +15,9 @@
 			<label>Choose the channel to be controlled by the applet's slider.
 The Master volume controls the output of all channels, including CD and Line in.  PCM controls playback from MP3 players, WAV files and other digital sounds.</label>
 		</frame>
+		<frame label='Display'>
+			<toggle name='show_icon' label='Show Icon in Panel'/>
+			<toggle name='show_bar' label='Show Volume level in Panel'/>
+		</frame>
 	</section>
 </options>

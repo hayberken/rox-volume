@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"PO-Revision-Date: Tue Apr 20 21:47:30 2004\n"
+"PO-Revision-Date: Sat May 22 07:46:30 2004\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -14,15 +14,15 @@ msgstr ""
 "Generated-By: pygettext.py 1.1\n"
 
 
-#: volume.py:58
+#: volume.py:80
 msgid "Volume control"
 msgstr ""
 
-#: mixer.py:105
+#: mixer.py:104
 msgid "PCM2"
 msgstr ""
 
-#: mixer.py:99
+#: mixer.py:98
 msgid "PCM"
 msgstr ""
 
@@ -30,7 +30,7 @@ msgstr ""
 msgid "Display"
 msgstr ""
 
-#: mixer.py:95
+#: mixer.py:94
 msgid "Master"
 msgstr ""
 
@@ -38,11 +38,11 @@ msgstr ""
 msgid "You need python 2.3 for ossaudiodev support"
 msgstr ""
 
-#: mixer.py:98
+#: mixer.py:97
 msgid "Synth"
 msgstr ""
 
-#: mixer.py:109
+#: mixer.py:108
 msgid "Aux"
 msgstr ""
 
@@ -50,27 +50,27 @@ msgstr ""
 msgid "Display the value (0-100) of each control as it changes."
 msgstr ""
 
-#: mixer.py:119
+#: mixer.py:118
 msgid "24"
 msgstr ""
 
-#: mixer.py:120
+#: mixer.py:119
 msgid "25"
 msgstr ""
 
-#: mixer.py:96
+#: mixer.py:95
 msgid "Bass"
 msgstr ""
 
-#: mixer.py:118
+#: mixer.py:117
 msgid "23"
 msgstr ""
 
-#: mixer.py:108
+#: mixer.py:107
 msgid "Out Gain"
 msgstr ""
 
-#: mixer.py:176 volume.py:64 tips:8
+#: mixer.py:175 volume.py:92 tips:8
 msgid "Options"
 msgstr ""
 
@@ -82,19 +82,23 @@ msgstr ""
 msgid "Path"
 msgstr ""
 
-#: mixer.py:101
+#: mixer.py:100
 msgid "Line"
 msgstr ""
 
-#: mixer.py:102
+#: mixer.py:101
 msgid "Mic"
 msgstr ""
 
-#: mixer.py:177 volume.py:65
+#: mixer.py:176 volume.py:93
 msgid "Info"
 msgstr ""
 
-#: mixer.py:103
+#: volume.py:90
+msgid "Mixer"
+msgstr ""
+
+#: mixer.py:102
 msgid "CD"
 msgstr ""
 
@@ -102,11 +106,11 @@ msgstr ""
 msgid "Controls"
 msgstr ""
 
-#: mixer.py:178 volume.py:66
+#: mixer.py:177 volume.py:94
 msgid "Close"
 msgstr ""
 
-#: mixer.py:115
+#: mixer.py:114
 msgid "ph In"
 msgstr ""
 
@@ -114,39 +118,39 @@ msgstr ""
 msgid "Rec."
 msgstr ""
 
-#: mixer.py:104
+#: mixer.py:103
 msgid "iMix"
 msgstr ""
 
-#: mixer.py:107
+#: mixer.py:106
 msgid "In Gain"
 msgstr ""
 
-#: mixer.py:97
+#: mixer.py:96
 msgid "Treble"
 msgstr ""
 
-#: mixer.py:116
+#: mixer.py:115
 msgid "ph Out"
 msgstr ""
 
-#: mixer.py:110
+#: mixer.py:109
 msgid "15"
 msgstr ""
 
-#: mixer.py:112
+#: mixer.py:111
 msgid "17"
 msgstr ""
 
-#: mixer.py:111
+#: mixer.py:110
 msgid "16"
 msgstr ""
 
-#: mixer.py:114
+#: mixer.py:113
 msgid "19"
 msgstr ""
 
-#: mixer.py:113
+#: mixer.py:112
 msgid "18"
 msgstr ""
 
@@ -158,11 +162,11 @@ msgstr ""
 msgid "General"
 msgstr ""
 
-#: mixer.py:106
+#: mixer.py:105
 msgid "Rec Level"
 msgstr ""
 
-#: mixer.py:117
+#: mixer.py:116
 msgid "Video"
 msgstr ""
 
@@ -170,7 +174,7 @@ msgstr ""
 msgid "Lock"
 msgstr ""
 
-#: mixer.py:100
+#: mixer.py:99
 msgid "Speaker"
 msgstr ""
 

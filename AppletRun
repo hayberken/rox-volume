@@ -10,6 +10,4 @@ if len(sys.argv) > 1:
 	main = volume.Volume(sys.argv[1])
 else:
 	main = volume.Volume(1)
-
-main.show_all()
 rox.mainloop()

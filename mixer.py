@@ -81,7 +81,6 @@ def build_hidden_value(box, node, label, option):
 	in the Options system without any UI
 	"""
 	widget = g.HBox() #something unobtrusive
-	controls = {}
 	def get_values(): return option.int_value
 	def set_values(): pass
 	box.handlers[option] = (get_values, set_values)

@@ -1,11 +1,19 @@
 <?xml version="1.0"?>
 <AppInfo>
-<Summary>ROX Volume and Mixer</Summary>
+	<Summary>ROX Volume and Mixer</Summary>
+	<Summary xml:lang="it">Volume e mixer per ROX</Summary>
 <About>
-<Purpose>ROX Volume and Mixer</Purpose>
-<Version>005</Version>
-<Authors>Ken Hayber</Authors>
-<License>GNU General Public License</License>
-<Homepage></Homepage>
+	<Purpose>ROX Volume and Mixer</Purpose>
+	<Version>006</Version>
+	<Authors>Ken Hayber</Authors>
+	<License>GNU General Public License</License>
+	<Homepage></Homepage>
+</About>
+<About xml:lang="it">
+    <Purpose label="Scopo">Volume e mixer per ROX</Purpose>
+    <Version label="Versione"/>
+    <Authors label="Autore"/>
+    <License label="Licenza"/>
+    <Homepage label="Sito web"/>
 </About>
 </AppInfo>
