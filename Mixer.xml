@@ -15,7 +15,12 @@
 			</toggle>
 		</frame>
 		<frame label='Controls'>
+
 		<mixer_controls name="controls"/>
+
+		<hidden_value name="lock_mask"/>
+		<hidden_value name="mute_mask"/>
+
 		</frame>
 	</section>
 </options>

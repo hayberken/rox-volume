@@ -40,6 +40,8 @@ MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
 SHOW_VALUES = Option('show_values', False)
 SHOW_CONTROLS = Option('controls', -1)
 
+MASK_LOCK = Option('lock_mask', -1)
+MASK_MUTE = Option('mute_mask', 0)
 
 def build_mixer_controls(box, node, label, option):
 	"""Custom Option widget to allow hide/display of each mixer control"""
@@ -72,6 +74,19 @@ def build_mixer_controls(box, node, label, option):
 	box.may_add_tip(frame, node)
 	return [frame]
 OptionsBox.widget_registry['mixer_controls'] = build_mixer_controls
+
+def build_hidden_value(box, node, label, option):
+	"""
+	A custom Option widget to save/restore a value
+	in the Options system without any UI
+	"""
+	widget = g.HBox() #something unobtrusive
+	controls = {}
+	def get_values(): return option.int_value
+	def set_values(): pass
+	box.handlers[option] = (get_values, set_values)
+	return [widget]
+OptionsBox.widget_registry['hidden_value'] = build_hidden_value
 
 rox.app_options.notify()
 
@@ -116,21 +131,33 @@ class Mixer(rox.Window):
 
 		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 		self.mixer = mixer
+
+		self.lock_mask = MASK_LOCK.int_value
+		self.mute_mask = MASK_MUTE.int_value
+		self.rec_mask = mixer.get_recsrc()
+
 		for control in OSS_CONTROLS:
 			#if the mixer supports a channel and we haven't masked it out, add it
 			if ((mixer.controls() & (1 << control[0])) and
 				(SHOW_CONTROLS.int_value & (1 << control[0]))):
 				option_mask = option_value = 0
+
 				if mixer.stereocontrols() & (1 << control[0]):
 					option_mask |= volumecontrol._STEREO
 					option_mask |= volumecontrol._LOCK
+
+				if self.lock_mask & (1 << control[0]):
 					option_value |= volumecontrol._LOCK
+
 				if mixer.reccontrols() & (1 << control[0]):
 					option_mask |= volumecontrol._REC
-				if mixer.get_recsrc() & (1 << control[0]):
+
+				if self.rec_mask & (1 << control[0]):
 					option_value |= volumecontrol._REC
 
 				option_mask |= volumecontrol._MUTE
+				if self.mute_mask & (1 << control[0]):
+					option_value |= volumecontrol._MUTE
 
 				volume = VolumeControl(control[0], option_mask, option_value,
 									SHOW_VALUES.int_value, control[1])
@@ -152,6 +179,9 @@ class Mixer(rox.Window):
 			])
 		self.menu.attach(self, self)
 
+		self.connect('delete_event', self.quit)
+
+
 
 	def button_press(self, text, event):
 		'''Popup menu handler'''
@@ -164,13 +194,32 @@ class Mixer(rox.Window):
 		"""Handle checkbox toggles"""
 		if id == volumecontrol._MUTE:
 			if val: #mute on
+				self.mute_mask |= (1<<control)
 				self.set_volume((0, 0), control)
 			else:
+				self.mute_mask &= ~(1<<control)
 				self.set_volume(vol.get_level(), control)
+			MASK_MUTE._set(self.mute_mask)
+
 		if id == volumecontrol._LOCK:
-			pass
+			if val:
+				self.lock_mask |= (1<<control)
+			else:
+				self.lock_mask &= ~(1<<control)
+			MASK_LOCK._set(self.lock_mask)
+
+		# use the OSS api to set/clear these bits/checkboxes.
 		if id == volumecontrol._REC:
-			pass
+			if val:
+				#when one is checked, the others (typically) are cleared
+				#but it may be possible to have more than one checked (I think)
+				self.rec_mask = self.mixer.set_recsrc( (1<<control) )
+				for x in self.thing.get_children():
+					if isinstance(x, VolumeControl):
+						x.set_recsrc(self.rec_mask & (1<<x.control))
+			else:
+				self.rec_mask = self.mixer.set_recsrc( ~(1<<control) )
+
 
 	def adjust_volume(self, vol, control, volume1, volume2):
 		"""Track changes to the volume controls"""
@@ -198,6 +247,7 @@ class Mixer(rox.Window):
 	def get_info(self):
 		InfoWin.infowin(APP_NAME)
 
-	def quit(self):
+	def quit(self, ev=None, e1=None):
+		rox.app_options.save()
 		self.destroy()
 

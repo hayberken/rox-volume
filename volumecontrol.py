@@ -72,8 +72,8 @@ class VolumeControl(g.Frame):
 		if option_mask & _STEREO:
 			self.stereo = True
 
+		self.control = control
 		self.vol_left = self.vol_right = 0
-
 		self.set_size_request(60, 200)
 
 		vbox = g.VBox()
@@ -115,19 +115,20 @@ class VolumeControl(g.Frame):
 			hbox.pack_start(volume2_control)
 
 		if self.rec:
-			rec_check = g.CheckButton(label='Rec.')
+			rec_check = g.CheckButton(label=_('Rec.'))
 			rec_check.set_active(self.channel_rec)
 			rec_check.connect('toggled', self.check, control, _REC)
 			vbox.pack_end(rec_check, False, False)
+			self.rec_check = rec_check
 
 		if self.mute:
-			mute_check = g.CheckButton(label='Mute')
+			mute_check = g.CheckButton(label=_('Mute'))
 			mute_check.set_active(self.channel_muted)
 			mute_check.connect('toggled', self.check, control, _MUTE)
 			vbox.pack_end(mute_check, False, False)
 
 		if self.stereo and self.lock:
-			lock_check = g.CheckButton(label='Lock')
+			lock_check = g.CheckButton(label=_('Lock'))
 			lock_check.set_active(self.channel_locked)
 			lock_check.connect('toggled', self.check, control, _LOCK)
 			vbox.pack_end(lock_check, False, False)
@@ -143,6 +144,12 @@ class VolumeControl(g.Frame):
 		self.volume1.set_value(level[0])
 		if self.stereo:
 			self.volume2.set_value(level[1])
+
+	def set_recsrc(self, val):
+		try:
+			self.rec_check.set_active(val)
+		except:
+			pass
 
 	def get_level(self):
 		"""

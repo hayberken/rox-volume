@@ -1,5 +1,10 @@
 Changes
 ~~~~~~~
+005 (2004-04-20)
+* Figured out how to save/restore the checkbox states for lock, mute and rec
+* Figured out the whole get|set_recsrc thing. (I think)
+* Made the checkbox labels translatable.
+
 004 (2004-04-18)
 * Factored out the VolumeControl widget and used in both Volume and Mixer.
 * Lots of configurable things via masks to VolumeControl()
