@@ -1,108 +1,15 @@
 #!/usr/bin/env python
 import findrox; findrox.version(1, 9, 8)
-import sys, os, gobject, socket
-import rox
+import rox, os, sys
 
 __builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
 
-from rox import g, applet, Menu
 
-try:
-	import ossaudiodev
-except:
-	rox.croak("You need python 2.3 for ossaudiodev support")
-
-APP_NAME = 'ROX-Volume'
-APP_DIR = rox.app_dir
-
-rox.setup_app_options(APP_NAME)
-rox.app_options.notify()
-Menu.set_save_name(APP_NAME)
-
-menu = Menu.Menu('main', [
-	('/Options','show_options','<StockItem>','', g.STOCK_PREFERENCES),
-	('/Info','get_info','<StockItem>','', g.STOCK_DIALOG_INFO),
-	('/Close','quit','<StockItem>','', g.STOCK_CLOSE),
-	])
-
-class Volume(applet.Applet):
-	def __init__(self, filename):
-		applet.Applet.__init__(self, filename)
-
-		self.thing = None
-
-		image_vol = g.Image()
-		image_vol.set_from_file(APP_DIR+'/images/stock_volume.svg')
-		self.add(image_vol)
-		self.add_events(g.gdk.BUTTON_PRESS_MASK)
-		self.connect('button-press-event', self.button_press)
-
-		menu.attach(self, self)
-
-
-	def button_press(self, window, event):
-		if event.button == 1:
-			if not self.hide_volume():
-				self.show_volume(event)
-		elif event.button == 3:
-			menu.popup(self, event, main.position_menu)
-
-
-	def hide_volume(self, event=None):
-		if self.thing:
-			self.thing.destroy()
-			self.thing = None
-			return True
-		return False
-
-
-	def show_volume(self, event):
-		self.thing = g.Window()
-		self.thing.set_decorated(False)
-		self.thing.set_size_request(22, 110)
-		self.thing.move(int(event.x_root)-10, int(event.y_root)-120)
-
-		self.volume = g.Adjustment(0.5, 0.0, 1.0, 0.1, 0.1, 0.0)
-		self.volume.connect('value_changed', self.adjust_volume)
-		self.volume_control = g.VScale(self.volume)
-		self.volume_control.set_draw_value(True)
-		self.volume_control.set_inverted(True)
-		self.volume_control.set_size_request(20, 100)
-		self.volume_control.set_value(self.get_volume())
-		self.thing.add(self.volume_control)
-		self.thing.show_all()
-		self.thing.show()
-
-
-	def adjust_volume(self, vol):
-		"""Set the playback volume"""
-		self.set_volume(vol.get_value())
-
-
-	def set_volume(self, volume):
-		vol = int(volume*100)
-		mixer = ossaudiodev.openmixer()
-		if mixer != None:
-			mixer.set(ossaudiodev.SOUND_MIXER_VOLUME, (vol, vol))
-
-
-	def get_volume(self):
-		mixer = ossaudiodev.openmixer()
-		if mixer != None:
-			vol = mixer.get(ossaudiodev.SOUND_MIXER_VOLUME)
-			return float(max(vol[0], vol[1]))/100
-
-
-	def quit(self):
-		self.destroy()
-
-
-
-
+import volume
 if len(sys.argv) > 1:
-	main = Volume(sys.argv[1])
+	main = volume.Volume(sys.argv[1])
 else:
-	main = Volume(1)
+	main = volume.Volume(1)
 
 main.show_all()
 rox.mainloop()

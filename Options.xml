@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<options>
+	<section title="Settings">
+		<frame label='Mixer Device'>
+			<entry name='mixer_device' label='Path'>
+			The /dev entry for your mixer.  Typically /dev/mixer.
+			</entry>
+		</frame>
+		<frame label='Mixer Channel'>
+			<radio-group name='volume_control' columns='1'>
+				<radio label='Volume' value='VOLUME'>The Master volume channel</radio>
+				<radio label='PCM' value='PCM'>The PCM channel</radio>
+				<radio label='Other' value='Other'>Sometimes there is an alternate PCM channel</radio>
+			</radio-group>
+		</frame>
+	</section>
+
+</options>

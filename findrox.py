@@ -34,7 +34,6 @@ def version(major, minor, micro):
 	except KeyError:
 		paths = [os.environ['HOME'] + '/lib',
 			 '/usr/local/lib', '/usr/lib' ]
-	print path
 
 	for p in paths:
 		p = os.path.join(p, 'ROX-Lib2')
