@@ -76,7 +76,7 @@ class Volume(applet.Applet):
 
 		self.bar = gtk.ProgressBar()
 		self.bar.set_orientation(bar_orient)
-		self.bar.set_size_request(12,12)
+		self.bar.set_size_request(15,15)
 		self.box.pack_end(self.bar)
 
 		tooltips = gtk.Tooltips()
