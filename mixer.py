@@ -18,7 +18,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import rox
+import rox, sys
 from rox import app_options, Menu, InfoWin, OptionsBox
 from rox.options import Option
 import gtk, gobject, volumecontrol
@@ -66,10 +66,10 @@ def build_mixer_controls(box, node, label, option):
 	box.handlers[option] = (get_values, set_values)
 
 	mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-	for control in OSS_CONTROLS:
-		if mixer.controls() & (1 << control[0]):
-			checkbox = controls[control[0]] = gtk.CheckButton(label=control[1])
-			if option.int_value & (1 << control[0]):
+	for channel in OSS_CHANNELS:
+		if mixer.controls() & (1 << channel[0]):
+			checkbox = controls[channel[0]] = gtk.CheckButton(label=channel[1])
+			if option.int_value & (1 << channel[0]):
 				checkbox.set_active(True)
 			checkbox.connect('toggled', lambda e: box.check_widget(option))
 			vbox.pack_start(checkbox)
@@ -93,7 +93,7 @@ OptionsBox.widget_registry['hidden_value'] = build_hidden_value
 rox.app_options.notify()
 
 
-OSS_CONTROLS = [
+OSS_CHANNELS = [
 	(ossaudiodev.SOUND_MIXER_VOLUME, _('Master')),
 	(ossaudiodev.SOUND_MIXER_BASS, _('Bass')),
 	(ossaudiodev.SOUND_MIXER_TREBLE, _('Treble')),
@@ -131,6 +131,9 @@ class Mixer(rox.Window):
 		self.thing = gtk.HBox()
 		self.add(self.thing)
 
+		# Update things when options change
+		rox.app_options.add_notify(self.get_options)
+
 		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 		self.mixer = mixer
 
@@ -138,38 +141,37 @@ class Mixer(rox.Window):
 		self.mute_mask = MASK_MUTE.int_value
 		self.rec_mask = mixer.get_recsrc()
 
-		for control in OSS_CONTROLS:
-			#if the mixer supports a channel and we haven't masked it out, add it
-			if ((mixer.controls() & (1 << control[0])) and
-				(SHOW_CONTROLS.int_value & (1 << control[0]))):
+		for channel in OSS_CHANNELS:
+			#if the mixer supports a channel add it
+			if (mixer.controls() & (1 << channel[0])):
 				option_mask = option_value = 0
 
-				if mixer.stereocontrols() & (1 << control[0]):
+				if mixer.stereocontrols() & (1 << channel[0]):
 					option_mask |= volumecontrol._STEREO
 					option_mask |= volumecontrol._LOCK
 
-				if self.lock_mask & (1 << control[0]):
+				if self.lock_mask & (1 << channel[0]):
 					option_value |= volumecontrol._LOCK
 
-				if mixer.reccontrols() & (1 << control[0]):
+				if mixer.reccontrols() & (1 << channel[0]):
 					option_mask |= volumecontrol._REC
 
-				if self.rec_mask & (1 << control[0]):
+				if self.rec_mask & (1 << channel[0]):
 					option_value |= volumecontrol._REC
 
 				option_mask |= volumecontrol._MUTE
-				if self.mute_mask & (1 << control[0]):
+				if self.mute_mask & (1 << channel[0]):
 					option_value |= volumecontrol._MUTE
 
-				volume = VolumeControl(control[0], option_mask, option_value,
-									SHOW_VALUES.int_value, control[1])
-				volume.set_level(self.get_volume(control[0]))
+				volume = VolumeControl(channel[0], option_mask, option_value,
+									SHOW_VALUES.int_value, channel[1])
+				volume.set_level(self.get_volume(channel[0]))
 				volume.connect("volume_changed", self.adjust_volume)
 				volume.connect("volume_setting_toggled", self.setting_toggled)
 				self.thing.pack_start(volume)
 
-		self.thing.show_all()
 		self.thing.show()
+		self.show_hide_controls()
 
 		self.add_events(gtk.gdk.BUTTON_PRESS_MASK)
 		self.connect('button-press-event', self.button_press)
@@ -183,7 +185,6 @@ class Mixer(rox.Window):
 		self.connect('delete_event', self.quit)
 
 
-
 	def button_press(self, text, event):
 		'''Popup menu handler'''
 		if event.button != 3:
@@ -191,22 +192,22 @@ class Mixer(rox.Window):
 		self.menu.popup(self, event)
 		return 1
 
-	def setting_toggled(self, vol, control, id, val):
+	def setting_toggled(self, vol, channel, id, val):
 		"""Handle checkbox toggles"""
 		if id == volumecontrol._MUTE:
 			if val: #mute on
-				self.mute_mask |= (1<<control)
-				self.set_volume((0, 0), control)
+				self.mute_mask |= (1<<channel)
+				self.set_volume((0, 0), channel)
 			else:
-				self.mute_mask &= ~(1<<control)
-				self.set_volume(vol.get_level(), control)
+				self.mute_mask &= ~(1<<channel)
+				self.set_volume(vol.get_level(), channel)
 			MASK_MUTE._set(self.mute_mask)
 
 		if id == volumecontrol._LOCK:
 			if val:
-				self.lock_mask |= (1<<control)
+				self.lock_mask |= (1<<channel)
 			else:
-				self.lock_mask &= ~(1<<control)
+				self.lock_mask &= ~(1<<channel)
 			MASK_LOCK._set(self.lock_mask)
 
 		# use the OSS api to set/clear these bits/checkboxes.
@@ -214,32 +215,48 @@ class Mixer(rox.Window):
 			if val:
 				#when one is checked, the others (typically) are cleared
 				#but it may be possible to have more than one checked (I think)
-				self.rec_mask = self.mixer.set_recsrc( (1<<control) )
+				self.rec_mask = self.mixer.set_recsrc( (1<<channel) )
 				for x in self.thing.get_children():
 					if isinstance(x, VolumeControl):
-						x.set_recsrc(self.rec_mask & (1<<x.control))
+						x.set_recsrc(self.rec_mask & (1<<x.channel))
 			else:
-				self.rec_mask = self.mixer.set_recsrc( ~(1<<control) )
+				self.rec_mask = self.mixer.set_recsrc( ~(1<<channel) )
 
 
-	def adjust_volume(self, vol, control, volume1, volume2):
+	def adjust_volume(self, vol, channel, volume1, volume2):
 		"""Track changes to the volume controls"""
-		self.set_volume((volume1, volume2), control)
+		self.set_volume((volume1, volume2), channel)
 
-	def set_volume(self, volume, control):
+	def set_volume(self, volume, channel):
 		"""Set the playback volume"""
 		if self.mixer != None:
-			self.mixer.set(control, (volume[0], volume[1]))
+			self.mixer.set(channel, (volume[0], volume[1]))
 
-	def get_volume(self, control):
+	def get_volume(self, channel):
 		"""Get the current sound card setting for specified channel"""
 		if self.mixer != None:
-			vol = self.mixer.get(control)
+			vol = self.mixer.get(channel)
 			return (vol[0], vol[1])
 
 	def get_options(self):
 		"""Used as the notify callback when options change"""
-		pass
+		if SHOW_VALUES.has_changed:
+			controls = self.thing.get_children()
+			for control in controls:
+				control.show_values(bool(SHOW_VALUES.int_value))
+
+		if SHOW_CONTROLS.has_changed:
+			self.show_hide_controls()
+
+	def show_hide_controls(self):
+		controls = self.thing.get_children()
+		for control in controls:
+			if (SHOW_CONTROLS.int_value & (1 << control.channel)):
+				control.show()
+			else:
+				control.hide()
+		(x, y) = self.thing.size_request()
+		self.resize(x, y)
 
 	def show_options(self, button=None):
 		"""Options edit dialog"""

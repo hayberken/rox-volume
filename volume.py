@@ -111,12 +111,12 @@ class Volume(applet.Applet):
 
 
 	def button_scroll(self, window, event):
-		control = MIXER_CONTROLS[VOLUME_CONTROL.value]
-		current_volume = self.get_volume(control)
+		channel = MIXER_CONTROLS[VOLUME_CONTROL.value]
+		current_volume = self.get_volume(channel)
 		if event.direction == 0:
-			self.set_volume((current_volume[0]+2, current_volume[1]+2), control)
+			self.set_volume((current_volume[0]+2, current_volume[1]+2), channel)
 		elif event.direction == 1:
-			self.set_volume((current_volume[0]-2, current_volume[1]-2), control)
+			self.set_volume((current_volume[0]-2, current_volume[1]-2), channel)
 
 	def event_callback(self, widget, rectangle):
 		"""Called when the panel sends a size."""
@@ -211,18 +211,18 @@ class Volume(applet.Applet):
 		self.thing.show_all()
 		self.thing.show()
 
-	def adjust_volume(self, vol, control, vol_left, vol_right):
+	def adjust_volume(self, vol, channel, vol_left, vol_right):
 		"""Set the playback volume"""
-		self.set_volume((vol_left, vol_right), control)
+		self.set_volume((vol_left, vol_right), channel)
 
-	def set_volume(self, volume, control):
+	def set_volume(self, volume, channel):
 		"""Send the volume setting(s) to the mixer """
-		self.mixer.set(control, volume)
+		self.mixer.set(channel, volume)
 		self.bar.set_fraction(max(volume[0], volume[1])/100.0)
 
-	def get_volume(self, control):
+	def get_volume(self, channel):
 		"""Get the volume settings from the mixer"""
-		vol = self.mixer.get(control)
+		vol = self.mixer.get(channel)
 		self.bar.set_fraction(max(vol[0], vol[1])/100.0)
 		return (vol[0], vol[1])
 

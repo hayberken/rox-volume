@@ -18,7 +18,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import rox, gtk, gobject
+import rox, gtk, gobject, sys
 
 CHANNEL_LEFT	= 0
 CHANNEL_RIGHT	= 1
@@ -35,15 +35,15 @@ class VolumeControl(gtk.Frame):
 	A Class that implements a volume control (stereo or mono) for a sound card
 	mixer.  Each instance represents one mixer channel on the sound card.
 	"""
-	def __init__(self, control, option_mask, option_value, show_value, label=None, vertical=True):
+	def __init__(self, channel, option_mask, option_value, show_value, label=None, vertical=True):
 		"""
 		Create a volume control widget
-		'control' specifies the ossaudio device mixer control (e.g. ossaudiodev.SOUND_VOLUME_MASTER).
+		'channel' specifies the ossaudio device mixer channel (e.g. ossaudiodev.SOUND_VOLUME_MASTER).
 		'option_mask' configures the widget while 'option_value' sets the actual
 		value of the corresponding mask (e.g. 'option_mask |= _MUTE' shows the mute
 		checkbox while 'option_value |= _MUTE' causes it to be checked by default)
 		'show_value' controls whether the volume text is displayed or not.
-		'label' is the name of the control (e.g. 'PCM).
+		'label' is the name of the channel (e.g. 'PCM).
 		'vertical' sets the widget's orientation (used for vertical panels)
 
 		The widget supports two signals 'volume_changed' and 'volume_setting_toggled'.
@@ -70,7 +70,7 @@ class VolumeControl(gtk.Frame):
 		if option_mask & _STEREO:
 			self.stereo = True
 
-		self.control = control
+		self.channel = channel
 		self.vol_left = self.vol_right = 0
 		self.set_size_request(60, 200)
 
@@ -82,10 +82,10 @@ class VolumeControl(gtk.Frame):
 		self.volume1 = gtk.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
 		if self.stereo:
 			self.volume1.connect('value_changed', self.value_changed,
-						control, CHANNEL_LEFT)
+						channel, CHANNEL_LEFT)
 		else:
 			self.volume1.connect('value_changed', self.value_changed,
-						control, CHANNEL_MONO)
+						channel, CHANNEL_MONO)
 
 		if vertical:
 			volume1_control = gtk.VScale(self.volume1)
@@ -100,7 +100,7 @@ class VolumeControl(gtk.Frame):
 		if self.stereo:
 			self.volume2 = gtk.Adjustment(0.0, 0.0, 100.0, 1.0, 10.0, 0.0)
 			self.volume2.connect('value_changed', self.value_changed,
-						control, CHANNEL_RIGHT)
+						channel, CHANNEL_RIGHT)
 
 			if vertical:
 				volume2_control = gtk.VScale(self.volume2)
@@ -115,23 +115,27 @@ class VolumeControl(gtk.Frame):
 		if self.rec:
 			rec_check = gtk.CheckButton(label=_('Rec.'))
 			rec_check.set_active(self.channel_rec)
-			rec_check.connect('toggled', self.check, control, _REC)
+			rec_check.connect('toggled', self.check, channel, _REC)
 			vbox.pack_end(rec_check, False, False)
 			self.rec_check = rec_check
 
 		if self.mute:
 			mute_check = gtk.CheckButton(label=_('Mute'))
 			mute_check.set_active(self.channel_muted)
-			mute_check.connect('toggled', self.check, control, _MUTE)
+			mute_check.connect('toggled', self.check, channel, _MUTE)
 			vbox.pack_end(mute_check, False, False)
 
 		if self.stereo and self.lock:
 			lock_check = gtk.CheckButton(label=_('Lock'))
 			lock_check.set_active(self.channel_locked)
-			lock_check.connect('toggled', self.check, control, _LOCK)
+			lock_check.connect('toggled', self.check, channel, _LOCK)
 			vbox.pack_end(lock_check, False, False)
 
 		self.show_all()
+
+		self.control1 = volume1_control
+		if self.stereo:
+			self.control2 = volume2_control
 
 
 	def set_level(self, level):
@@ -156,27 +160,33 @@ class VolumeControl(gtk.Frame):
 		"""
 		return (self.vol_left, self.vol_right)
 
-	def value_changed(self, vol, control, channel):
+	def value_changed(self, vol, channel, channel_lr):
 		"""
 		Track changes in the volume controls and pass them back to the parent
 		via the 'volume_changed' signal.
 		"""
-		if channel == CHANNEL_LEFT:
+		if channel_lr == CHANNEL_LEFT:
 			self.vol_left = int(vol.get_value())
 			if self.lock and self.channel_locked:
 				self.volume2.set_value(vol.get_value())
 
-		elif channel == CHANNEL_RIGHT:
+		elif channel_lr == CHANNEL_RIGHT:
 			self.vol_right = int(vol.get_value())
 			if self.lock and self.channel_locked:
 				self.volume1.set_value(vol.get_value())
 
 		else:
 			self.vol_left = self.vol_right = int(vol.get_value())
-		self.emit("volume_changed", control, self.vol_left, self.vol_right)
+		self.emit("volume_changed", channel, self.vol_left, self.vol_right)
 
 
-	def check(self, button, control, id):
+	def show_values(self, show_value):
+		self.control1.set_draw_value(show_value)
+		if self.stereo:
+			self.control2.set_draw_value(show_value)
+
+
+	def check(self, button, channel, id):
 		"""
 		Process the various checkboxes and signal the parent when they change
 		via the 'volume_setting_changed' signal.
@@ -191,7 +201,7 @@ class VolumeControl(gtk.Frame):
 			self.channel_muted = not self.channel_muted
 		elif id == _REC:
 			self.channel_rec = not self.channel_rec
-		self.emit('volume_setting_toggled', control, id, button.get_active())
+		self.emit('volume_setting_toggled', channel, id, button.get_active())
 
 
 #I need these to be called only once, not each time an instance is created.
