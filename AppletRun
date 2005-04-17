@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import findrox; findrox.version(1, 9, 13)
+import findrox; findrox.version(2,0,0)
 import rox, os, sys
 
 __builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))

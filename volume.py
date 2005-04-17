@@ -1,7 +1,7 @@
 """
 	volume.py (a volume control applet for the ROX Panel)
 
-	Copyright 2004 Kenneth Hayber <khayber@socal.rr.com>
+	Copyright 2004 Kenneth Hayber <ken@hayber.us>
 		All rights reserved.
 
 	This program is free software; you can redistribute it and/or modify
