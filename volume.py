@@ -155,7 +155,7 @@ class Volume(applet.Applet):
 	def get_panel_orientation(self):
 		"""Return the panel orientation ('Top', 'Bottom', 'Left', 'Right')
 		and the margin for displaying a popup menu"""
-		pos = self.socket.property_get('_ROX_PANEL_MENU_POS', 'STRING', gtk.FALSE)
+		pos = self.socket.property_get('_ROX_PANEL_MENU_POS', 'STRING', False)
 		if pos: pos = pos[2]
 		if pos:
 			side, margin = pos.split(',')
