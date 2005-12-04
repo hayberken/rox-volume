@@ -146,7 +146,6 @@ class Volume(applet.Applet):
 	def hide_volume(self, event=None):
 		"""Destroy the popup volume control"""
 		if self.thing:
-#			self.mixer = None
 			self.thing.destroy()
 			self.thing = None
 			return True
@@ -167,6 +166,7 @@ class Volume(applet.Applet):
 	def set_position(self):
 		"""Set the position of the popup"""
 		side = self.get_panel_orientation()
+		vertical = False
 
 		# widget (x, y, w, h, bits)
 		geometry = self.socket.get_geometry()
@@ -191,11 +191,15 @@ class Volume(applet.Applet):
 			self.thing.set_size_request(APP_SIZE[1], APP_SIZE[0])
 			self.thing.move(self.socket.get_origin()[0]-APP_SIZE[1],
 						self.socket.get_origin()[1])
+		else:
+			vertical = True
+			self.thing.set_size_request(APP_SIZE[0], APP_SIZE[1])
+			self.thing.move(self.socket.get_origin()[0],
+						self.socket.get_origin()[1]-APP_SIZE[1])
 		return vertical
 
 	def show_volume(self, event):
 		"""Display the popup volume control"""
-#		self.mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
 
 		self.thing = gtk.Window(type=gtk.WINDOW_POPUP)
 		self.thing.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_MENU)
