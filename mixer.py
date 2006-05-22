@@ -25,26 +25,37 @@ import gtk, gobject, volumecontrol
 from volumecontrol import VolumeControl
 
 try:
-	import ossaudiodev
+	import alsaaudio
 except:
-	rox.croak(_("You need python 2.3 for ossaudiodev support"))
+	rox.croak(_("You need to install the pyalsaaudio module"))
 
-APP_NAME = 'Mixer'
+APP_NAME = 'MixerX'
 APP_DIR = rox.app_dir
 APP_SIZE = [20, 100]
 
 #Options.xml processing
-from rox import choices
-choices.migrate('Volume', 'hayber.us')
-rox.setup_app_options('Volume', 'Mixer.xml', site='hayber.us')
-Menu.set_save_name('Volume', site='hayber.us')
+rox.setup_app_options('VolumeX', 'Mixer.xml', site='hayber.us')
+Menu.set_save_name('VolumeX', site='hayber.us')
 
-MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
+MIXER_DEVICE = Option('mixer_device', 'default')
 SHOW_VALUES = Option('show_values', False)
 SHOW_CONTROLS = Option('controls', -1)
 
 MASK_LOCK = Option('lock_mask', -1)
 MASK_MUTE = Option('mute_mask', 0)
+
+
+try:
+	ALSA_CHANNELS = []
+	for channel in alsaaudio.mixers(MIXER_DEVICE.value):
+		id = 0
+		while (channel,id) in ALSA_CHANNELS:
+			id += 1
+		mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+		if len(mixer.volumecap()):
+			ALSA_CHANNELS.append((channel,id))
+except:
+	pass	
 
 def build_mixer_controls(box, node, label, option):
 	"""Custom Option widget to allow hide/display of each mixer control"""
@@ -65,15 +76,17 @@ def build_mixer_controls(box, node, label, option):
 	def set_values(): pass
 	box.handlers[option] = (get_values, set_values)
 
-	mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-	for channel in OSS_CHANNELS:
-		if mixer.controls() & (1 << channel[0]):
-			checkbox = controls[channel[0]] = gtk.CheckButton(label=channel[1])
-			if option.int_value & (1 << channel[0]):
-				checkbox.set_active(True)
-			checkbox.connect('toggled', lambda e: box.check_widget(option))
-			vbox.pack_start(checkbox)
-	mixer.close()
+	n = 0
+	for channel, id in ALSA_CHANNELS:
+		mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+		if not len(mixer.volumecap()):
+			continue
+		checkbox = controls[n] = gtk.CheckButton(label=channel)
+		if option.int_value & (1 << n):
+			checkbox.set_active(True)
+		checkbox.connect('toggled', lambda e: box.check_widget(option))
+		vbox.pack_start(checkbox)
+		n += 1
 	box.may_add_tip(frame, node)
 	return [frame]
 OptionsBox.widget_registry['mixer_controls'] = build_mixer_controls
@@ -93,36 +106,6 @@ OptionsBox.widget_registry['hidden_value'] = build_hidden_value
 rox.app_options.notify()
 
 
-OSS_CHANNELS = [
-	(ossaudiodev.SOUND_MIXER_VOLUME, _('Master')),
-	(ossaudiodev.SOUND_MIXER_BASS, _('Bass')),
-	(ossaudiodev.SOUND_MIXER_TREBLE, _('Treble')),
-	(ossaudiodev.SOUND_MIXER_SYNTH, _('Synth')),
-	(ossaudiodev.SOUND_MIXER_PCM, _('PCM')),
-	(ossaudiodev.SOUND_MIXER_SPEAKER, _('Speaker')),
-	(ossaudiodev.SOUND_MIXER_LINE, _('Line')),
-	(ossaudiodev.SOUND_MIXER_MIC, _('Mic')),
-	(ossaudiodev.SOUND_MIXER_CD, _('CD')),
-	(ossaudiodev.SOUND_MIXER_IMIX, _('iMix')),  # Recording monitor
-	(ossaudiodev.SOUND_MIXER_ALTPCM, _('PCM2')),
-	(ossaudiodev.SOUND_MIXER_RECLEV, _('Rec Level')),  # Recording level
-	(ossaudiodev.SOUND_MIXER_IGAIN,	_('In Gain')),  # Input gain
-	(ossaudiodev.SOUND_MIXER_OGAIN,	_('Out Gain')),  # Output gain
-	(14, _('Aux')),
-	(15, _('15')),
-	(16, _('16')),
-	(17, _('17')),
-	(18, _('18')),
-	(19, _('19')),
-	(20, _('ph In')),
-	(21, _('ph Out')),
-	(22, _('Video')),
-	(23, _('23')),
-	(24, _('24')),
-	(25, _('25')),
-]
-
-
 class Mixer(rox.Window):
 	"""A sound mixer class"""
 	def __init__(self):
@@ -134,41 +117,47 @@ class Mixer(rox.Window):
 		# Update things when options change
 		rox.app_options.add_notify(self.get_options)
 
-		mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-		self.mixer = mixer
-
 		self.lock_mask = MASK_LOCK.int_value
-		self.mute_mask = MASK_MUTE.int_value
-		self.rec_mask = mixer.get_recsrc()
 
-		for channel in OSS_CHANNELS:
+		n = 0
+		for channel, id in ALSA_CHANNELS:
 			#if the mixer supports a channel add it
-			if (mixer.controls() & (1 << channel[0])):
-				option_mask = option_value = 0
+			mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+			option_mask = option_value = 0
 
-				if mixer.stereocontrols() & (1 << channel[0]):
-					option_mask |= volumecontrol._STEREO
-					option_mask |= volumecontrol._LOCK
+			if not len(mixer.volumecap()):
+				continue
+				
+			if len(mixer.getvolume()) > 1:
+				option_mask |= volumecontrol._STEREO
+				option_mask |= volumecontrol._LOCK
 
-				if self.lock_mask & (1 << channel[0]):
-					option_value |= volumecontrol._LOCK
+			if self.lock_mask & (1 << n):
+				option_value |= volumecontrol._LOCK
 
-				if mixer.reccontrols() & (1 << channel[0]):
+			try:
+				if mixer.getrec():
 					option_mask |= volumecontrol._REC
-
-				if self.rec_mask & (1 << channel[0]):
+				if mixer.getrec()[0]:
 					option_value |= volumecontrol._REC
+			except:
+				pass
 
-				option_mask |= volumecontrol._MUTE
-				if self.mute_mask & (1 << channel[0]):
+			try:
+				if mixer.getmute():
+					option_mask |= volumecontrol._MUTE
+				if mixer.getmute()[0]:
 					option_value |= volumecontrol._MUTE
-
-				volume = VolumeControl(channel[0], option_mask, option_value,
-									SHOW_VALUES.int_value, channel[1])
-				volume.set_level(self.get_volume(channel[0]))
-				volume.connect("volume_changed", self.adjust_volume)
-				volume.connect("volume_setting_toggled", self.setting_toggled)
-				self.thing.pack_start(volume)
+			except:
+				pass
+			
+			volume = VolumeControl(n, option_mask, option_value,
+								SHOW_VALUES.int_value, channel)
+			volume.set_level(self.get_volume(n))
+			volume.connect("volume_changed", self.adjust_volume)
+			volume.connect("volume_setting_toggled", self.setting_toggled)
+			self.thing.pack_start(volume)
+			n += 1
 
 		self.thing.show()
 		self.show_hide_controls()
@@ -192,35 +181,23 @@ class Mixer(rox.Window):
 		self.menu.popup(self, event)
 		return 1
 
-	def setting_toggled(self, vol, channel, id, val):
+	def setting_toggled(self, vol, channel, button, val):
 		"""Handle checkbox toggles"""
-		if id == volumecontrol._MUTE:
-			if val: #mute on
-				self.mute_mask |= (1<<channel)
-				self.set_volume((0, 0), channel)
-			else:
-				self.mute_mask &= ~(1<<channel)
-				self.set_volume(vol.get_level(), channel)
-			MASK_MUTE._set(self.mute_mask)
+		ch, id = ALSA_CHANNELS[channel]
+		mixer = alsaaudio.Mixer(ch, id, MIXER_DEVICE.value)
+		
+		if button == volumecontrol._MUTE:
+			mixer.setmute(val)
 
-		if id == volumecontrol._LOCK:
+		if button == volumecontrol._LOCK:
 			if val:
 				self.lock_mask |= (1<<channel)
 			else:
 				self.lock_mask &= ~(1<<channel)
 			MASK_LOCK._set(self.lock_mask)
 
-		# use the OSS api to set/clear these bits/checkboxes.
-		if id == volumecontrol._REC:
-			if val:
-				#when one is checked, the others (typically) are cleared
-				#but it may be possible to have more than one checked (I think)
-				self.rec_mask = self.mixer.set_recsrc( (1<<channel) )
-				for x in self.thing.get_children():
-					if isinstance(x, VolumeControl):
-						x.set_recsrc(self.rec_mask & (1<<x.channel))
-			else:
-				self.rec_mask = self.mixer.set_recsrc( ~(1<<channel) )
+		if button == volumecontrol._REC:
+			mixer.setrec(val)
 
 
 	def adjust_volume(self, vol, channel, volume1, volume2):
@@ -229,14 +206,23 @@ class Mixer(rox.Window):
 
 	def set_volume(self, volume, channel):
 		"""Set the playback volume"""
-		if self.mixer != None:
-			self.mixer.set(channel, (volume[0], volume[1]))
+		ch, id = ALSA_CHANNELS[channel]
+		mixer = alsaaudio.Mixer(ch, id, MIXER_DEVICE.value)
+		
+		try:
+			mixer.setvolume(volume[0], 0)
+			mixer.setvolume(volume[1], 1)
+		except:
+			pass
 
 	def get_volume(self, channel):
 		"""Get the current sound card setting for specified channel"""
-		if self.mixer != None:
-			vol = self.mixer.get(channel)
-			return (vol[0], vol[1])
+		ch, id = ALSA_CHANNELS[channel]
+		mixer = alsaaudio.Mixer(ch, id, MIXER_DEVICE.value)
+		vol = mixer.getvolume()
+		if len(vol) == 1:
+			return (vol[0], vol[0])
+		return (vol[0], vol[1])
 
 	def get_options(self):
 		"""Used as the notify callback when options change"""

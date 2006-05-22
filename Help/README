@@ -6,7 +6,8 @@
 Brief
 ~~~~~
 No, really.  It is a Volume control applet and a Mixer for ROX.
-Written in python/pygtk (what else?) and supporting OSS (or Alsa-OSS emulation)
+Written in python/pygtk (what else?) and supporting ALSA
+(see versions older than 008 for OSS - or Alsa-OSS emulation - support)
 
 
 Conditions
@@ -25,7 +26,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-Please report any bugs to me, Ken Hayber <khayber@socal.rr.com>
+Please report any bugs to me, Ken Hayber <ken@hayber.us>
 
 
 Requirements
@@ -46,7 +47,6 @@ Right click for Options (mixer device, PCM or Master volume control).
 Supports Bottom, Top, Left, Right panels.
 
 Run as a normal AppDir to use as a Mixer.  Supports stereo and mono controls.  Discovers
-your controls automatically (via ossaudiodev)
+your controls automatically (via pyalsaaudio or ossaudiodev)
 
-Email the author for help :)
-	khayber(a)socal.rr.com
+

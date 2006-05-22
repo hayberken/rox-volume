@@ -38,7 +38,7 @@ class VolumeControl(gtk.Frame):
 	def __init__(self, channel, option_mask, option_value, show_value, label=None, vertical=True):
 		"""
 		Create a volume control widget
-		'channel' specifies the ossaudio device mixer channel (e.g. ossaudiodev.SOUND_VOLUME_MASTER).
+		'channel' specifies the audio device mixer channel.
 		'option_mask' configures the widget while 'option_value' sets the actual
 		value of the corresponding mask (e.g. 'option_mask |= _MUTE' shows the mute
 		checkbox while 'option_value |= _MUTE' causes it to be checked by default)
@@ -72,7 +72,7 @@ class VolumeControl(gtk.Frame):
 
 		self.channel = channel
 		self.vol_left = self.vol_right = 0
-		self.set_size_request(60, 200)
+		self.set_size_request(-1, 200)
 
 		vbox = gtk.VBox()
 		self.add(vbox)

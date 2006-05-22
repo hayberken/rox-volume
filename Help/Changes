@@ -1,5 +1,20 @@
 Changes
 ~~~~~~~
+008 (2006-01-15)
+* Converted to ALSA interface.  Volume-007 is the last to support OSS.
+* Fixed error handlers in AppRun/AppletRun.
+
+007 (2005-10-12)
+* Options now editable from the AppMenu.
+* New Icon?
+
+006 (2004-05-22)
+* Input from Cyrille Mars: mouse scroll-wheel on Panel icon changes volume without clicking.
+* Input from Jonatan Liljedahl: option to show a progress bar on the Panel indicating the current volume setting (Options to show/hide the icon and/or progress bar)
+* Italian translation from Yuri Bongiorno.
+* Resizes with the Panel properly.
+* Launch the Mixer from the popup menu
+
 005 (2004-04-20)
 * Figured out how to save/restore the checkbox states for lock, mute and rec
 * Figured out the whole get|set_recsrc thing. (I think)

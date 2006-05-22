@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <options>
 	<hidden_value name="lock_mask"/>
-	<hidden_value name="mute_mask"/>
 
 	<section title="General">
 		<hbox>
 			<vbox>
 				<frame label='Mixer Device'>
-					<entry name='mixer_device' label='Path'>
-					The /dev entry for your mixer.  Typically /dev/mixer.
+					<entry name='mixer_device' label='Name'>
+					The card name for your mixer.  Typically it is 'default'.  
+If you have more than one soundcard, you can specify which 
+card you want to control here.
 					</entry>
 				</frame>
 				<frame label='Options'>

@@ -24,32 +24,25 @@ from rox.options import Option
 from volumecontrol import VolumeControl
 
 try:
-	import ossaudiodev
+	import alsaaudio
 except:
-	rox.croak(_("You need python 2.3 for ossaudiodev support"))
+	rox.croak(_("You need to install the pyalsaaudio module"))
 
-APP_NAME = 'Volume'
+APP_NAME = 'VolumeX'
 APP_DIR = rox.app_dir
 APP_SIZE = [28, 150]
 
 #Options.xml processing
-from rox import choices
-choices.migrate(APP_NAME, 'hayber.us')
 rox.setup_app_options(APP_NAME, site='hayber.us')
 Menu.set_save_name(APP_NAME, site='hayber.us')
 
-MIXER_DEVICE = Option('mixer_device', '/dev/mixer')
-VOLUME_CONTROL = Option('volume_control', 'VOLUME')
+MIXER_DEVICE = Option('mixer_device', 'default')
+VOLUME_CONTROL = Option('volume_control', 'Master')
 SHOW_ICON = Option('show_icon', True)
 SHOW_BAR = Option('show_bar', False)
 
 rox.app_options.notify()
 
-MIXER_CONTROLS = {
-	'VOLUME':ossaudiodev.SOUND_MIXER_VOLUME,
-	'PCM':ossaudiodev.SOUND_MIXER_PCM,
-	'Other':ossaudiodev.SOUND_MIXER_ALTPCM
-	}
 
 class Volume(applet.Applet):
 	"""An applet to control a sound card Master or PCM volume"""
@@ -98,8 +91,7 @@ class Volume(applet.Applet):
 		self.menu.attach(self, self)
 
 		self.thing = None
-		self.mixer = ossaudiodev.openmixer(MIXER_DEVICE.value)
-		self.get_volume(MIXER_CONTROLS[VOLUME_CONTROL.value])
+		self.get_volume(0)
 
 		self.show_all()
 		self.show()
@@ -111,12 +103,13 @@ class Volume(applet.Applet):
 
 
 	def button_scroll(self, window, event):
-		channel = MIXER_CONTROLS[VOLUME_CONTROL.value]
-		current_volume = self.get_volume(channel)
+		channel = 0
+		vol = self.bar.get_fraction()
 		if event.direction == 0:
-			self.set_volume((current_volume[0]+2, current_volume[1]+2), channel)
+			vol += 0.02
 		elif event.direction == 1:
-			self.set_volume((current_volume[0]-2, current_volume[1]-2), channel)
+			vol -= 0.02
+		self.set_volume((vol*100, vol*100), channel)
 
 	def event_callback(self, widget, rectangle):
 		"""Called when the panel sends a size."""
@@ -206,9 +199,8 @@ class Volume(applet.Applet):
 		self.thing.set_decorated(False)
 
 		vertical = self.set_position()
-		self.volume = VolumeControl(MIXER_CONTROLS[VOLUME_CONTROL.value],
-						0, 0, True, None, vertical)
-		self.volume.set_level(self.get_volume(MIXER_CONTROLS[VOLUME_CONTROL.value]))
+		self.volume = VolumeControl(0, 0, 0, True, None, vertical)
+		self.volume.set_level(self.get_volume(0))
 		self.volume.connect("volume_changed", self.adjust_volume)
 
 		self.thing.add(self.volume)
@@ -221,19 +213,25 @@ class Volume(applet.Applet):
 
 	def set_volume(self, volume, channel):
 		"""Send the volume setting(s) to the mixer """
-		self.mixer.set(channel, volume)
+		mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
+		try:
+			mixer.setvolume(volume[0], 0)
+			mixer.setvolume(volume[1], 1)
+		except:
+			pass
 		self.bar.set_fraction(max(volume[0], volume[1])/100.0)
 
 	def get_volume(self, channel):
 		"""Get the volume settings from the mixer"""
-		vol = self.mixer.get(channel)
+		mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
+		vol = mixer.getvolume()
 		self.bar.set_fraction(max(vol[0], vol[1])/100.0)
 		return (vol[0], vol[1])
 
 	def get_options(self):
 		"""Used as the notify callback when options change"""
 		if VOLUME_CONTROL.has_changed:
-			self.get_volume(MIXER_CONTROLS[VOLUME_CONTROL.value])
+			self.get_volume(VOLUME_CONTROL.value)
 
 		if SHOW_BAR.has_changed:
 			if SHOW_BAR.int_value:

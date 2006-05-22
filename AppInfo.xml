@@ -8,17 +8,17 @@
 			<Label xml:lang="en">Volume Options...</Label>
 		</Item>
 	</AppMenu>
-	<Summary>ROX Volume and Mixer</Summary>
-	<Summary xml:lang="it">Volume e mixer per ROX</Summary>
+	<Summary>Volume and Mixer</Summary>
+	<Summary xml:lang="it">Volume e mixer</Summary>
 <About>
-	<Purpose>ROX Volume and Mixer</Purpose>
-	<Version>006</Version>
+	<Purpose>Volume and Mixer</Purpose>
+	<Version>008</Version>
 	<Authors>Ken Hayber</Authors>
 	<License>GNU General Public License</License>
 	<Homepage>http://www.hayber.us/wiki/index.php/ROX/Volume</Homepage>
 </About>
 <About xml:lang="it">
-    <Purpose label="Scopo">Volume e mixer per ROX</Purpose>
+    <Purpose label="Scopo">Volume e mixer</Purpose>
     <Version label="Versione"/>
     <Authors label="Autore"/>
     <License label="Licenza"/>

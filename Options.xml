@@ -2,18 +2,16 @@
 <options>
 	<section title="General">
 		<frame label='Mixer Device'>
-			<entry name='mixer_device' label='Path'>
-			The /dev entry for your mixer.  Typically /dev/mixer.
+			<entry name='mixer_device' label='Name'>
+				The card name for your mixer.  Typically it is 'default'.  
+If you have more than one soundcard, you can specify which card you want to control here.
 			</entry>
 		</frame>
 		<frame label='Mixer Channel'>
-			<radio-group name='volume_control' columns='1'>
-				<radio label='Volume' value='VOLUME'>The Master volume channel</radio>
-				<radio label='PCM' value='PCM'>The PCM channel</radio>
-				<radio label='Other' value='Other'>Sometimes there is an alternate PCM channel</radio>
-			</radio-group>
-			<label>Choose the channel to be controlled by the applet's slider.
-The Master volume controls the output of all channels, including CD and Line in.  PCM controls playback from MP3 players, WAV files and other digital sounds.</label>
+			<entry name='volume_control' label='Name'>
+				Choose the channel to be controlled by the applet's slider.
+Typically the 'Master' volume controls the output of all channels, including CD and Line in. 'PCM' controls playback from MP3 players, WAV files and other digital sounds.  See the list of channels in the Mixer settings to select the appropriate name.
+			</entry>
 		</frame>
 		<frame label='Display'>
 			<toggle name='show_icon' label='Show Icon in Panel'/>

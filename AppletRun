@@ -2,12 +2,14 @@
 import findrox; findrox.version(2,0,0)
 import rox, os, sys
 
-__builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
+try:
+	__builtins__._ = rox.i18n.translation(os.path.join(rox.app_dir, 'Messages'))
 
-
-import volume
-if len(sys.argv) > 1:
-	main = volume.Volume(sys.argv[1])
-else:
-	main = volume.Volume(1)
-rox.mainloop()
+	import volume
+	if len(sys.argv) > 1:
+		main = volume.Volume(sys.argv[1])
+	else:
+		main = volume.Volume(1)
+	rox.mainloop()
+except:
+	rox.report_exception()
