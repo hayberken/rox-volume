@@ -45,6 +45,9 @@ rox.app_options.notify()
 
 
 class Volume(applet.Applet):
+	icons = []
+	
+	
 	"""An applet to control a sound card Master or PCM volume"""
 	def __init__(self, filename):
 		applet.Applet.__init__(self, filename)
@@ -62,7 +65,18 @@ class Volume(applet.Applet):
 		self.add(self.box)
 
 		self.image = gtk.Image()
-		self.pixbuf = gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/volume.svg')
+		try:
+			theme = gtk.icon_theme_get_default()
+			self.icons.append(theme.load_icon('audio-volume-muted', 24, 0))
+			self.icons.append(theme.load_icon('audio-volume-low', 24, 0))
+			self.icons.append(theme.load_icon('audio-volume-medium', 24, 0))
+			self.icons.append(theme.load_icon('audio-volume-high', 24, 0))
+		except:
+			self.icons.append(gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/stock_volume-mute.svg'))
+			self.icons.append(gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/stock_volume-min.svg'))
+			self.icons.append(gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/stock_volume-med.svg'))
+			self.icons.append(gtk.gdk.pixbuf_new_from_file(APP_DIR+'/images/stock_volume-max.svg'))
+		self.pixbuf = self.icons[2]
 		self.image.set_from_pixbuf(self.pixbuf)
 		self.size = 0
 		self.box.pack_start(self.image)
@@ -72,8 +86,8 @@ class Volume(applet.Applet):
 		self.bar.set_size_request(12,12)
 		self.box.pack_end(self.bar)
 
-		tooltips = gtk.Tooltips()
-		tooltips.set_tip(self, _('Volume control'), tip_private=None)
+		self.tips = gtk.Tooltips()
+#		self.tips.set_tip(self, _('Volume control'), tip_private=None)
 
 		rox.app_options.add_notify(self.get_options)
 		self.connect('size-allocate', self.event_callback)
@@ -211,21 +225,33 @@ class Volume(applet.Applet):
 		"""Set the playback volume"""
 		self.set_volume((vol_left, vol_right), channel)
 
-	def set_volume(self, volume, channel):
+	def set_volume(self, vol, channel):
 		"""Send the volume setting(s) to the mixer """
 		mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
 		try:
-			mixer.setvolume(volume[0], 0)
-			mixer.setvolume(volume[1], 1)
+			mixer.setvolume(vol[0], 0)
+			mixer.setvolume(vol[1], 1)
 		except:
 			pass
-		self.bar.set_fraction(max(volume[0], volume[1])/100.0)
+			
+		if vol[0] <= 0:
+			self.pixbuf = self.icons[0]
+		elif vol[0] >= 66:
+			self.pixbuf = self.icons[3]
+		elif vol[0] >= 33:
+			self.pixbuf = self.icons[2]
+		else:
+			self.pixbuf = self.icons[1]
+		self.resize_image(self.size)
+		self.tips.set_tip(self, _('Volume control') + ': %d%%' % min(vol[0], vol[1]))
+		self.bar.set_fraction(max(vol[0], vol[1])/100.0)
 
 	def get_volume(self, channel):
 		"""Get the volume settings from the mixer"""
 		mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
 		vol = mixer.getvolume()
 		self.bar.set_fraction(max(vol[0], vol[1])/100.0)
+
 		return (vol[0], vol[1])
 
 	def get_options(self):
