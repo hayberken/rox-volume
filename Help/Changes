@@ -1,5 +1,11 @@
 Changes
 ~~~~~~~
+009 (2006-07-30)
+* Use current theme for panel icon if present.
+* Update panel icon to show volume level
+* Add private volume-level icons from GnomeSVG theme
+* Update tooltip to show current volume level
+
 008 (2006-01-15)
 * Converted to ALSA interface.  Volume-007 is the last to support OSS.
 * Fixed error handlers in AppRun/AppletRun.
