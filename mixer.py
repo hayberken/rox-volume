@@ -34,8 +34,8 @@ APP_DIR = rox.app_dir
 APP_SIZE = [20, 100]
 
 #Options.xml processing
-rox.setup_app_options('VolumeX', 'Mixer.xml', site='hayber.us')
-Menu.set_save_name('VolumeX', site='hayber.us')
+rox.setup_app_options('Volume', 'Mixer.xml', site='hayber.us')
+Menu.set_save_name('Volume', site='hayber.us')
 
 MIXER_DEVICE = Option('mixer_device', 'default')
 SHOW_VALUES = Option('show_values', False)
@@ -51,7 +51,10 @@ try:
 		id = 0
 		while (channel,id) in ALSA_CHANNELS:
 			id += 1
-		mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+		try:
+			mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+		except alsaaudio.ALSAAudioError:
+			continue
 		if len(mixer.volumecap()):
 			ALSA_CHANNELS.append((channel,id))
 except:

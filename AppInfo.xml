@@ -15,7 +15,7 @@
 	<Version>009</Version>
 	<Authors>Ken Hayber</Authors>
 	<License>GNU General Public License</License>
-	<Homepage>http://www.hayber.us/wiki/index.php/ROX/Volume</Homepage>
+	<Homepage>http://www.hayber.us/ROX/Volume</Homepage>
 </About>
 <About xml:lang="it">
     <Purpose label="Scopo">Volume e mixer</Purpose>

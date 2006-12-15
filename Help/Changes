@@ -1,5 +1,8 @@
 Changes
 ~~~~~~~
+010 (???)
+* Catch exceptions on some hardware during ALSA channel scan (Jim Ramsay)
+
 009 (2006-07-30)
 * Use current theme for panel icon if present.
 * Update panel icon to show volume level
