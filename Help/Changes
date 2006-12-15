@@ -2,6 +2,10 @@ Changes
 ~~~~~~~
 010 (???)
 * Catch exceptions on some hardware during ALSA channel scan (Jim Ramsay)
+* Added theme support
+* Mute when panel icon is double-clicked
+* Add Channel selector (in place of text box) in Volume options
+* Renamed configuration dir from VolumeX (experimental) to Volume.
 
 009 (2006-07-30)
 * Use current theme for panel icon if present.
