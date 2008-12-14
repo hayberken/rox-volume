@@ -44,14 +44,23 @@ SHOW_ICON = Option('show_icon', True)
 SHOW_BAR = Option('show_bar', False)
 THEME = Option('theme', 'gtk-theme')
 
+# support two different alsaaudio APIs
+if hasattr(alsaaudio, 'cards'):
+	try:
+		mixer_device = alsaaudio.cards().index(MIXER_DEVICE.value)
+	except ValueError:
+		mixer_device = 0
+else:
+	mixer_device = MIXER_DEVICE.value
+
 try:
 	ALSA_CHANNELS = []
-	for channel in alsaaudio.mixers(MIXER_DEVICE.value):
+	for channel in alsaaudio.mixers(mixer_device):
 		id = 0
 		while (channel,id) in ALSA_CHANNELS:
 			id += 1
 		try:
-			mixer = alsaaudio.Mixer(channel, id, MIXER_DEVICE.value)
+			mixer = alsaaudio.Mixer(channel, id, mixer_device)
 		except alsaaudio.ALSAAudioError:
 			continue
 		if len(mixer.volumecap()):
@@ -85,7 +94,7 @@ def build_channel_list(box, node, label, option):
 			label = item.get_text()
 			if label == option.value:
 				button.set_history(i)
-	
+
 	def read_channel(): return button.child.get_text()
 	box.handlers[option] = (read_channel, update_channel)
 	button.connect('changed', lambda w: box.check_widget(option))
@@ -98,8 +107,8 @@ rox.app_options.notify()
 class Volume(applet.Applet):
 	icons = []
 	size = 24
-	
-	
+
+
 	"""An applet to control a sound card Master or PCM volume"""
 	def __init__(self, filename):
 		applet.Applet.__init__(self, filename)
@@ -115,7 +124,7 @@ class Volume(applet.Applet):
 			bar_orient = gtk.PROGRESS_BOTTOM_TO_TOP
 
 		self.add(self.box)
-		
+
 		self.load_icons()
 		self.image = gtk.Image()
 		self.box.pack_start(self.image)
@@ -145,16 +154,16 @@ class Volume(applet.Applet):
 
 		self.thing = None
 		try:
-			self.mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
+			self.mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, mixer_device)
 		except:
-			rox.info(_('Failed to open Mixer device "%s". Please select a different device.\n') % MIXER_DEVICE.value)
+			rox.info(_('Failed to open Mixer device "%s". Please select a different device.\n') % mixer_device)
 			return
-			
+
 		self.get_volume()
 		self.update_ui()
 		self.show_all()
 		self.show()
-		
+
 		if not SHOW_ICON.int_value:
 			self.image.hide()
 		if not SHOW_BAR.int_value:
@@ -303,7 +312,7 @@ class Volume(applet.Applet):
 		vol = self.mixer.getvolume()
 		self.level = vol
 		return (vol[0], vol[1])
-		
+
 	def mute(self):
 		try:
 			mute = self.mixer.getmute()[0]
@@ -314,12 +323,12 @@ class Volume(applet.Applet):
 			self.update_ui()
 		except:
 			rox.info(_('Device does not support Muting.'))
-		
+
 	def update_ui(self):
 		vol = self.level
 		try: mute = self.mixer.getmute()[0]
 		except: mute = False
-		
+
 		if (vol[0] <= 0) or mute:
 			self.pixbuf = self.icons[0]
 		elif vol[0] >= 66:
@@ -331,14 +340,14 @@ class Volume(applet.Applet):
 
 		self.resize_image(self.size)
 		self.tips.set_tip(self, _('Volume control') + ': %d%%' % min(vol[0], vol[1]))
-		if self.thing: 
+		if self.thing:
 			self.volume.set_level((vol[0], vol[1]))
-		self.bar.set_fraction(max(vol[0], vol[1])/100.0)		
+		self.bar.set_fraction(max(vol[0], vol[1])/100.0)
 
 	def get_options(self):
 		"""Used as the notify callback when options change"""
 		if VOLUME_CONTROL.has_changed:
-			self.mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, MIXER_DEVICE.value)
+			self.mixer = alsaaudio.Mixer(VOLUME_CONTROL.value, 0, mixer_device)
 			self.get_volume()
 			self.update_ui()
 
@@ -353,7 +362,7 @@ class Volume(applet.Applet):
 				self.image.show()
 			else:
 				self.image.hide()
-				
+
 		if THEME.has_changed:
 			self.load_icons()
 			self.update_ui()
