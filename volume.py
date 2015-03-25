@@ -38,8 +38,6 @@ rox.setup_app_options(APP_NAME, site='hayber.us')
 Menu.set_save_name(APP_NAME, site='hayber.us')
 
 MIXER_DEVICE = Option('mixer_device', 'default')
-#VOLUME_CONTROL = Option('volume_control', 'Master')
-VOLUME_CONTROL = Option('mixer_channels', 'PCM')
 SHOW_ICON = Option('show_icon', True)
 SHOW_BAR = Option('show_bar', False)
 THEME = Option('theme', 'gtk-theme')
@@ -53,6 +51,7 @@ if hasattr(alsaaudio, 'cards'):
 else:
 	mixer_device = MIXER_DEVICE.value
 
+volume_control = None
 try:
 	ALSA_CHANNELS = []
 	for channel in alsaaudio.mixers(mixer_device):
@@ -64,9 +63,15 @@ try:
 		except alsaaudio.ALSAAudioError:
 			continue
 		if len(mixer.volumecap()):
+			if volume_control is None:
+				volume_control = channel
 			ALSA_CHANNELS.append(channel)
 except:
 	pass
+
+if volume_control is None:
+	volume_control = 'Master'
+VOLUME_CONTROL = Option('mixer_channels', volume_control)
 
 def build_channel_list(box, node, label, option):
 	hbox = gtk.HBox(False, 4)
