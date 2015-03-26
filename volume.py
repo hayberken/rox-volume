@@ -101,6 +101,49 @@ def build_channel_list(box, node, label, option):
 	return [hbox]
 OptionsBox.widget_registry['channel_list'] = build_channel_list
 
+
+def build_mixer_devices_list(box, node, label, option):
+	hbox = gtk.HBox(False, 4)
+	hbox.pack_start(box.make_sized_label(label), False, True, 0)
+
+	if not hasattr(alsaaudio, 'cards'):
+		entry = gtk.Entry()
+		hbox.pack_start(entry, True, True, 0)
+		def update_mixer_device():
+			entry.set_text(option.value)
+		def read_mixer_device():
+			return entry.get_text()
+		box.handlers[option] = (read_mixer_device, update_mixer_device)
+		return [hbox]
+
+	button = gtk.OptionMenu()
+	hbox.pack_start(button, True, True, 0)
+
+	menu = gtk.Menu()
+	button.set_menu(menu)
+
+	for name in alsaaudio.cards():
+		item = gtk.MenuItem(name)
+		menu.append(item)
+		item.show_all()
+
+	def update_mixer_device():
+		i = -1
+		for kid in menu.get_children():
+			i += 1
+			item = kid.child
+			if not item:
+				item = button.child
+			label = item.get_text()
+			if label == option.value:
+				button.set_history(i)
+
+	def read_mixer_device(): return button.child.get_text()
+	box.handlers[option] = (read_mixer_device, update_mixer_device)
+	button.connect('changed', lambda w: box.check_widget(option))
+	return [hbox]
+OptionsBox.widget_registry['mixer_devices_list'] = build_mixer_devices_list
+
 rox.app_options.notify()
 
 
