@@ -304,6 +304,8 @@ class Volume(applet.Applet):
 
 	def set_volume(self, vol):
 		"""Send the volume setting(s) to the mixer """
+		if len(vol) == 1:
+			vol = vol + vol
 		try:
 			self.mixer.setvolume(vol[0], 0)
 			self.mixer.setvolume(vol[1], 1)
@@ -315,6 +317,8 @@ class Volume(applet.Applet):
 	def get_volume(self):
 		"""Get the volume settings from the mixer"""
 		vol = self.mixer.getvolume()
+		if len(vol) == 1:
+			vol = vol + vol
 		self.level = vol
 		return (vol[0], vol[1])
 
