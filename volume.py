@@ -311,10 +311,11 @@ class Volume(applet.Applet):
 
 	def set_volume(self, vol):
 		"""Send the volume setting(s) to the mixer """
-		if len(vol) == 1:
-			vol = vol + vol
-		self.mixer.setvolume(int(vol[0]), 0)
-		self.mixer.setvolume(int(vol[1]), 1)
+		for i, v in enumerate(vol):
+			try:
+			        self.mixer.setvolume(int(v), i)
+			except alsaaudio.ALSAAudioError:
+				pass
 		self.level = vol
 		self.update_ui()
 
