@@ -221,8 +221,12 @@ class Mixer(rox.Window):
 		ch, id = ALSA_CHANNELS[channel]
 		mixer = alsaaudio.Mixer(ch, id, mixer_device)
 
-		mixer.setvolume(int(volume[0]), 0)
-		mixer.setvolume(int(volume[1]), 1)
+                for i, v in enumerate(volume):
+                    try:
+                            mixer.setvolume(int(v), i)
+                    except alsaaudio.ALSAAudioError:
+                            # No such channel.
+                            pass
 
 	def get_volume(self, channel):
 		"""Get the current sound card setting for specified channel"""
