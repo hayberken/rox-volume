@@ -303,8 +303,8 @@ class Volume(applet.Applet):
 		"""Send the volume setting(s) to the mixer """
 		if len(vol) == 1:
 			vol = vol + vol
-		self.mixer.setvolume(vol[0], 0)
-		self.mixer.setvolume(vol[1], 1)
+		self.mixer.setvolume(int(vol[0]), 0)
+		self.mixer.setvolume(int(vol[1]), 1)
 		self.level = vol
 		self.update_ui()
 
