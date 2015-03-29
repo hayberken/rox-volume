@@ -18,7 +18,7 @@
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
 
-import rox, sys, os, gtk
+import rox, sys, os, gtk, gobject
 from rox import app_options, applet, Menu, InfoWin, OptionsBox
 from rox.options import Option
 from volumecontrol import VolumeControl
@@ -176,12 +176,22 @@ class Volume(applet.Applet):
 
 	def load_icons(self):
 		self.icons = []
+
 		if THEME.value == 'gtk-theme':
+
 			theme = gtk.icon_theme_get_default()
-			self.icons.append(theme.load_icon('audio-volume-muted', 24, 0))
-			self.icons.append(theme.load_icon('audio-volume-low', 24, 0))
-			self.icons.append(theme.load_icon('audio-volume-medium', 24, 0))
-			self.icons.append(theme.load_icon('audio-volume-high', 24, 0))
+			fallback_theme_dir = os.path.join(APP_DIR, 'themes', 'GnomeSVG')
+
+			def load_icon_from_theme(icon_name):
+				try:
+					return theme.load_icon(icon_name, 24, 0)
+				except gobject.GError:
+					return gtk.gdk.pixbuf_new_from_file(os.path.join(fallback_theme_dir, '%s.svg' % icon_name))
+
+			self.icons.append(load_icon_from_theme('audio-volume-muted'))
+			self.icons.append(load_icon_from_theme('audio-volume-low'))
+			self.icons.append(load_icon_from_theme('audio-volume-medium'))
+			self.icons.append(load_icon_from_theme('audio-volume-high'))
 			return
 		theme_dir = os.path.join(APP_DIR, 'themes', THEME.value)
 		self.icons.append(gtk.gdk.pixbuf_new_from_file(os.path.join(theme_dir, 'audio-volume-muted.svg')))
