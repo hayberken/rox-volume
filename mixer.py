@@ -26,7 +26,7 @@ from volumecontrol import VolumeControl
 
 try:
 	import alsaaudio
-except:
+except ImportError:
 	rox.croak(_("You need to install the pyalsaaudio module"))
 
 APP_NAME = 'MixerX'
@@ -53,20 +53,17 @@ if hasattr(alsaaudio, 'cards'):
 else:
 	mixer_device = MIXER_DEVICE.value
 
-try:
-	ALSA_CHANNELS = []
-	for channel in alsaaudio.mixers(mixer_device):
-		id = 0
-		while (channel,id) in ALSA_CHANNELS:
-			id += 1
-		try:
-			mixer = alsaaudio.Mixer(channel, id, mixer_device)
-		except alsaaudio.ALSAAudioError:
-			continue
-		if len(mixer.volumecap()):
-			ALSA_CHANNELS.append((channel,id))
-except:
-	pass
+ALSA_CHANNELS = []
+for channel in alsaaudio.mixers(mixer_device):
+	id = 0
+	while (channel,id) in ALSA_CHANNELS:
+		id += 1
+	try:
+		mixer = alsaaudio.Mixer(channel, id, mixer_device)
+	except alsaaudio.ALSAAudioError:
+		continue
+	if len(mixer.volumecap()):
+		ALSA_CHANNELS.append((channel,id))
 
 def build_mixer_controls(box, node, label, option):
 	"""Custom Option widget to allow hide/display of each mixer control"""
@@ -147,20 +144,24 @@ class Mixer(rox.Window):
 				option_value |= volumecontrol._LOCK
 
 			try:
-				if mixer.getrec():
-					option_mask |= volumecontrol._REC
-				if mixer.getrec()[0]:
-					option_value |= volumecontrol._REC
-			except:
+				rec = mixer.getrec()
+			except alsaaudio.ALSAAudioError:
 				pass
+			else:
+			    if rec:
+				    option_mask |= volumecontrol._REC
+			    if rec[0]:
+				    option_value |= volumecontrol._REC
 
 			try:
-				if mixer.getmute():
-					option_mask |= volumecontrol._MUTE
-				if mixer.getmute()[0]:
-					option_value |= volumecontrol._MUTE
-			except:
-				pass
+				mute = mixer.getmute()
+			except alsaaudio.ALSAAudioError:
+			    pass
+			else:
+			    if mute:
+				    option_mask |= volumecontrol._MUTE
+			    if mute[0]:
+				    option_value |= volumecontrol._MUTE
 
 			volume = VolumeControl(n, option_mask, option_value,
 								SHOW_VALUES.int_value, channel)
@@ -220,11 +221,12 @@ class Mixer(rox.Window):
 		ch, id = ALSA_CHANNELS[channel]
 		mixer = alsaaudio.Mixer(ch, id, mixer_device)
 
-		try:
-			mixer.setvolume(volume[0], 0)
-			mixer.setvolume(volume[1], 1)
-		except:
-			pass
+                for i, v in enumerate(volume):
+                    try:
+                            mixer.setvolume(int(v), i)
+                    except alsaaudio.ALSAAudioError:
+                            # No such channel.
+                            pass
 
 	def get_volume(self, channel):
 		"""Get the current sound card setting for specified channel"""
